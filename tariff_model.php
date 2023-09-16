@@ -67,8 +67,8 @@ class Tariff
             }
 
             // Find when tariff was first assigned
-            $result = $this->mysqli->query("SELECT `start` FROM user_tariffs WHERE tariffid='$row->id' ORDER BY `start` ASC LIMIT 1");
-            $row2 = $result->fetch_object();
+            $result2 = $this->mysqli->query("SELECT `start` FROM user_tariffs WHERE tariffid='$row->id' ORDER BY `start` ASC LIMIT 1");
+            $row2 = $result2->fetch_object();
             if ($row2) $row->first_assigned = date("jS F Y",$row2->start);
             else $row->first_assigned = "";
 

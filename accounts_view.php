@@ -31,10 +31,11 @@ $v = 1;
                 <th>ID</th>
                 <th>Username</th>
                 <th>Email</th>
-                <th>MPAN</th>
+                <th>Tariff</th>
+                <!--<th>MPAN</th>
                 <th>CAD</th>
                 <th>Octopus</th>
-                <th>Meter Serial</th>
+                <th>Meter Serial</th>-->
                 <th>Data</th>
                 <th>Enabled</th>
             </tr>
@@ -42,10 +43,11 @@ $v = 1;
                 <td><a href="#">{{ account.userid }}</a></td>
                 <td>{{ account.username }}</td>
                 <td>{{ account.email }}</td>
-                <td>{{ account.mpan }}</td>
+                <td>{{ account.tariff_name }}</td>
+                <!--<td>{{ account.mpan }}</td>
                 <td>{{ account.cad_serial }}</td>
                 <td>{{ account.octopus_apikey }}</td>
-                <td>{{ account.meter_serial }}</td>
+                <td>{{ account.meter_serial }}</td>-->
                 <td>{{ account.data }}</td>
                 <td>{{ account.enabled }}</td>
             </tr>
@@ -109,6 +111,19 @@ $v = 1;
             </div>
         </div>
 
+        <p><b>Tariff:</b></p>
+
+        <div class="row-fluid" style="max-width:800px">
+            <div class="span4">
+                <p>
+                    <select v-model="edit.tariff_id">
+                        <option>UNASSIGNED</option>
+                        <option v-for="tariff in tariffs" :value="tariff.id">{{ tariff.name }}</option>
+                    </select>
+                </p>
+            </div>
+        </div>
+
         <button class="btn" @click="mode = 'list'">Cancel</button>
         <button class="btn btn-info" @click="save_account" v-if="mode=='add'">Add account</button>
         <button class="btn btn-warning" @click="save_account" v-if="mode=='edit'">Save changes</button>
@@ -127,11 +142,13 @@ $v = 1;
     var clubid = <?php echo $clubid; ?>;
     var accounts = [];
     account_list();
+    tariff_list();
 
     app = new Vue({
         el: '#app',
         data: {
-            accounts: accounts,
+            accounts: [],
+            tariffs: [],
             mode: 'list', // list, edit, add
             edit: {},
             show_error: false,
@@ -217,5 +234,11 @@ $v = 1;
         $.getJSON('<?php echo $path; ?>club/account/list.json', {id:clubid}, function(result) {
             app.accounts = result;
         });
+    }
+
+    function tariff_list() {
+        $.getJSON('<?php echo $path; ?>club/tariff/list.json', {clubid:clubid}, function(result) {
+            app.tariffs = result;
+        });  
     }
 </script>

@@ -131,6 +131,11 @@ class Club
             $user = $this->get_user($account->userid);
             $account->username = $user->username;
             $account->email = $user->email;
+
+            // Add tariff details
+            $tariff = $this->get_tariff($this->get_user_tariff($account->userid));
+            $account->tariff_id = $tariff->id;
+            $account->tariff_name = $tariff->name;
         }
 
         return $accounts;
@@ -292,6 +297,17 @@ class Club
         $stmt->close();
 
         return array("success"=>true);
+    }
+
+    // Get user tariff
+    public function get_user_tariff($userid) {
+        $userid = (int) $userid;
+        $result = $this->mysqli->query("SELECT tariffid FROM user_tariffs WHERE userid=$userid ORDER BY start DESC LIMIT 1");
+        if ($row = $result->fetch_object()) {
+            return $row->tariffid;
+        } else {
+            return false;
+        }
     }
 
     // Check if a tariff exists
