@@ -3,12 +3,18 @@ chdir("/var/www/energylocal");
 require "Lib/load_emoncms.php";
 
 // Reset application
+$mysqli->query("TRUNCATE TABLE `users`");
+$mysqli->query("TRUNCATE TABLE `feeds`");
+
 $mysqli->query("TRUNCATE TABLE `club`");
 $mysqli->query("TRUNCATE TABLE `club_accounts`");
 $mysqli->query("TRUNCATE TABLE `tariffs`");
 $mysqli->query("TRUNCATE TABLE `tariff_periods`");
 $mysqli->query("TRUNCATE TABLE `user_tariffs`");
 
+// Create admin user
+$result = $user->register("admin","admin","admin@energylocal.co.uk","Europe/London");
+print json_encode($result)."\n";
 
 require_once "Modules/club/club_model.php";
 $club_class = new Club($mysqli, $redis, $user);
