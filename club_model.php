@@ -133,9 +133,14 @@ class Club
             $account->email = $user->email;
 
             // Add tariff details
-            $tariff = $this->get_tariff($this->get_user_tariff($account->userid));
-            $account->tariff_id = $tariff->id;
-            $account->tariff_name = $tariff->name;
+            if ($user_tariff = $this->get_user_tariff($account->userid)) {
+                $tariff = $this->get_tariff($user_tariff);
+                $account->tariff_id = $tariff->id;
+                $account->tariff_name = $tariff->name;
+            } else {
+                $account->tariff_id = false;
+                $account->tariff_name = "";
+            }
         }
 
         return $accounts;
