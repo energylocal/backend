@@ -116,15 +116,11 @@ class Club
     public function account_list($id) {
         $id = (int) $id;
 
-        $stmt = $this->mysqli->prepare("SELECT * FROM club_accounts WHERE clubid=?");
-        $stmt->bind_param("i",$id);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $result = $this->mysqli->query("SELECT userid FROM club_accounts WHERE clubid=$id");
         $accounts = array();
         while ($row = $result->fetch_object()) {
             $accounts[] = $row;
         }
-        $stmt->close();
 
         // Add user details
         foreach ($accounts as &$account) {
@@ -143,6 +139,30 @@ class Club
             }
         }
 
+        return $accounts;
+    }
+
+    public function account_data_status($id,$feed_class) {
+        $id = (int) $id;
+        $result = $this->mysqli->query("SELECT userid FROM club_accounts WHERE clubid=$id");
+        $accounts = array();
+        while ($row = $result->fetch_object()) {
+            $userid = $row->userid;
+
+            $row = array(                
+                'octopus'=>array('days'=>0,'updated'=>0)                 
+            );
+
+            if ($feedid = $feed_class->get_id($userid,"use_hh_octopus")) {
+                if ($meta = $feed_class->get_meta($feedid)) {
+                    $row['octopus']['days'] = $meta->npoints / 48;
+                    $row['octopus']['updated'] = (time() - ($meta->start_time + ($meta->npoints*$meta->interval)))/86400;   
+                    $row['octopus']['feedid'] = $feedid;
+                }
+            }
+
+            $accounts[$userid] = $row;
+        }
         return $accounts;
     }
 
@@ -175,7 +195,7 @@ class Club
         $stmt->bind_param("iissss",$id,$userid,$mpan,$cad_serial,$octopus_apikey,$meter_serial);
         $stmt->execute();
         $stmt->close();
-        return array("success"=>true);
+        return array("success"=>true, "userid"=>$userid);
     }
 
     // Edit a user in a club

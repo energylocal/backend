@@ -13,7 +13,7 @@ $v = 1;
         <li class="active"><?php echo $club_name; ?> <span class="divider">/</span></li>
         <li class="active">Accounts</li>
     </ul>
-    
+
     <div v-if="mode=='list'">
 
         <ul class="nav nav-tabs">
@@ -22,10 +22,10 @@ $v = 1;
         </ul>
 
         <p>
-        <button class="btn" style="float: right;" @click="add_account"><i class="icon-plus"></i> Add new user</button>
+            <button class="btn" style="float: right;" @click="add_account"><i class="icon-plus"></i> Add new user</button>
         <div style="clear: both;"></div>
         </p>
-        
+
         <table class="table table-striped">
             <tr>
                 <th>ID</th>
@@ -48,7 +48,20 @@ $v = 1;
                 <td>{{ account.cad_serial }}</td>
                 <td>{{ account.octopus_apikey }}</td>
                 <td>{{ account.meter_serial }}</td>-->
-                <td>{{ account.data }}</td>
+
+                <td v-for="source in data_status[account.userid]">
+                    <span v-if="source.days">
+                        <span class="label label-success" v-if="source.updated<7" :title="source.days | toFixed(0) + ' days of data'" @click="graph(source.feedid)">
+                            {{ source.updated | toFixed(0) }}d ago</span>
+                        <span class="label label-warning" v-else-if="source.updated<31" :title="source.days | toFixed(0) + ' days of data'" @click="graph(source.feedid)">
+                            {{ source.updated | toFixed(0) }}d ago</span>
+                        <span class="label label-important" v-else :title="source.days | toFixed(0) + ' days of data'" @click="graph(source.feedid)">
+                            {{ source.updated | toFixed(0) }}d ago</span>
+                    </span>
+                    <span v-else class="label">no data</span>
+                </td>
+                <td v-if="!data_status[account.userid]"><span class="label">loading</span></td>
+
                 <td>{{ account.enabled }}</td>
             </tr>
         </table>
@@ -68,13 +81,13 @@ $v = 1;
             <div class="span4" v-if="mode=='add'">
                 <p>
                     <label>Password</label>
-                    <input type="text" v-model="edit.password" >
+                    <input type="text" v-model="edit.password">
                 </p>
             </div>
             <div class="span4">
                 <p>
                     <label>Email</label>
-                    <input type="text" v-model="edit.email" >
+                    <input type="text" v-model="edit.email">
                 </p>
             </div>
         </div>
@@ -91,7 +104,7 @@ $v = 1;
             <div class="span4">
                 <p>
                     <label>CAD Serial</label>
-                    <input type="text" v-model="edit.cad_serial" >
+                    <input type="text" v-model="edit.cad_serial">
                 </p>
             </div>
         </div>
@@ -100,13 +113,13 @@ $v = 1;
             <div class="span4">
                 <p>
                     <label>Octopus API key</label>
-                    <input type="text" v-model="edit.octopus_apikey" >
+                    <input type="text" v-model="edit.octopus_apikey">
                 </p>
             </div>
             <div class="span4">
                 <p>
                     <label>Meter serial</label>
-                    <input type="text" v-model="edit.meter_serial" >
+                    <input type="text" v-model="edit.meter_serial">
                 </p>
             </div>
         </div>
@@ -134,7 +147,7 @@ $v = 1;
 
     </div>
 
-    </div>
+</div>
 
 </div>
 
@@ -143,12 +156,14 @@ $v = 1;
     var accounts = [];
     account_list();
     tariff_list();
+    data_status();
 
     app = new Vue({
         el: '#app',
         data: {
             accounts: [],
             tariffs: [],
+            data_status: [],
             mode: 'list', // list, edit, add
             edit: {},
             show_error: false,
@@ -156,8 +171,16 @@ $v = 1;
             show_success: false,
             success_message: ''
         },
+        filters: {
+            toFixed: function(value, decimals) {
+                if (!value) value = 0;
+                if (!decimals) decimals = 0;
+                value = value.toFixed(decimals);
+                return value;
+            }
+        },
         methods: {
-            add_account: function () {
+            add_account: function() {
                 this.mode = 'add';
                 this.edit = {
                     username: '',
@@ -169,11 +192,11 @@ $v = 1;
                     meter_serial: ''
                 };
             },
-            edit_account: function (index) {
+            edit_account: function(index) {
                 this.mode = 'edit';
                 this.edit = this.accounts[index];
             },
-            save_account: function () {
+            save_account: function() {
                 var params = {
                     'id': clubid,
                     'username': encodeURIComponent(this.edit.username),
@@ -194,19 +217,19 @@ $v = 1;
                 }
 
                 this.show_error = false;
-                $.post('<?php echo $path; ?>' + api, params, function (result) {
+                $.post('<?php echo $path; ?>' + api, params, function(result) {
                     if (result.success) {
                         account_list();
                         app.mode = 'list';
                     } else {
-                        app.error_message = "<b>Error:</b> "+result.message;
+                        app.error_message = "<b>Error:</b> " + result.message;
                         app.show_error = true;
                     }
                 });
 
-                
+
             },
-            fetch_octopus_data: function () {
+            fetch_octopus_data: function() {
                 app.show_success = true;
                 app.success_message = "Fetching data...";
                 this.show_error = false;
@@ -215,7 +238,7 @@ $v = 1;
                     'mpan': this.edit.mpan,
                     'octopus_apikey': this.edit.octopus_apikey,
                     'meter_serial': this.edit.meter_serial
-                }, function (result) {
+                }, function(result) {
                     if (result.success) {
                         app.show_error = false;
                         app.show_success = true;
@@ -223,22 +246,37 @@ $v = 1;
                     } else {
                         app.show_success = false;
                         app.show_error = true;
-                        app.error_message = "<b>Error:</b> "+result.message;
-                    }      
+                        app.error_message = "<b>Error:</b> " + result.message;
+                    }
                 });
+            },
+            graph: function() {
+                alert("graph");
             }
         }
     });
 
     function account_list() {
-        $.getJSON('<?php echo $path; ?>club/account/list.json', {id:clubid}, function(result) {
+        $.getJSON('<?php echo $path; ?>club/account/list.json', {
+            id: clubid
+        }, function(result) {
             app.accounts = result;
         });
     }
 
     function tariff_list() {
-        $.getJSON('<?php echo $path; ?>club/tariff/list.json', {clubid:clubid}, function(result) {
+        $.getJSON('<?php echo $path; ?>club/tariff/list.json', {
+            clubid: clubid
+        }, function(result) {
             app.tariffs = result;
-        });  
+        });
+    }
+
+    function data_status() {
+        $.getJSON('<?php echo $path; ?>club/account/data-status.json', {
+            id: clubid
+        }, function(result) {
+            app.data_status = result;
+        });
     }
 </script>

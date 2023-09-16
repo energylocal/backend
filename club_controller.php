@@ -57,6 +57,15 @@ function club_controller()
                 return $club->account_list($id);
             }
 
+            if ($route->subaction == 'data-status'){
+                $route->format = "json";
+                $id = get('id',true);
+
+                require "Modules/feed/feed_model.php";
+                $feed_class = new Feed($mysqli,$redis,$settings['feed']);
+                return $club->account_data_status($id,$feed_class);
+            }       
+
             if ($route->subaction == 'add'){
                 $route->format = "json";
                 return $club->add_account(

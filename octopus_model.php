@@ -41,7 +41,7 @@ class OctopusAPI
 
         // Get octopus feed id or create feed
         if (!$feedid = $this->feed->get_id($userid, "use_hh_octopus")) {
-            $result = $this->feed->create($userid, "user", "use_hh_octopus", 5, json_decode('{"interval":1800}'));
+            $result = $this->feed->create($userid, "energylocal", "use_hh_octopus", 5, json_decode('{"interval":1800}'));
             if (!$result['success']) return $result;
             $feedid = $result['feedid'];
         }
