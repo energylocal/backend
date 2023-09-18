@@ -127,13 +127,58 @@ function club_controller()
                 );
             }
 
-            // set tariff
+            // Set users current tariff
             if ($route->subaction == 'set_tariff') {
                 $route->format = "json";
                 return $club->set_user_tariff(
                     get('userid',true),
                     get('tariffid',true)
                 );
+            }
+
+            // Daily consumption, time of use and use of generation data for a user
+            // returns multiple days between start and end
+            if ($route->subaction == 'daily') {
+                $route->format = "json";
+
+                $start = get('start',true);
+                $end = get('end',true);
+
+                // get midnight of today
+                // using datetime
+                /*
+                $date = new DateTime();
+                $date->setTime(0,0,0);
+                $end = $date->getTimestamp();
+
+                // get midnight of 7 days ago
+                $date->modify('-7 days');
+                $start = $date->getTimestamp();
+                */
+
+                // Set based on session user
+                $userid = 2;
+
+                // Find consumption feed id
+                require "Modules/feed/feed_model.php";
+                $feed = new Feed($mysqli,$redis,$settings['feed']);
+
+                require "Modules/club/account_data_model.php";
+                $account_data = new AccountData($feed, $club, $tariff);
+
+                return $account_data->daily_summary($userid,$start,$end);
+            }
+
+            // Monthly consumption, time of use and use of generation data for a user
+            // returns multiple months between start and end
+            if ($route->subaction == 'monthly') {    
+                
+            }
+
+            // Custom consumption, time of use and use of generation data for a user
+            // returns summary results for a custom period
+            if ($route->subaction == 'custom') {    
+                
             }
         }
 

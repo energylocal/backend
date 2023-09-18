@@ -116,7 +116,7 @@ class Club
     public function account_list($id) {
         $id = (int) $id;
 
-        $result = $this->mysqli->query("SELECT userid FROM club_accounts WHERE clubid=$id");
+        $result = $this->mysqli->query("SELECT userid, mpan, cad_serial, meter_serial, octopus_apikey FROM club_accounts WHERE clubid=$id");
         $accounts = array();
         while ($row = $result->fetch_object()) {
             $accounts[] = $row;
@@ -286,10 +286,11 @@ class Club
     // -------------------
 
     // Add tariff to user
-    public function set_user_tariff($userid,$tariffid) {
+    public function set_user_tariff($userid,$tariffid,$start=false) {
         $userid = (int) $userid;
         $tariffid = (int) $tariffid;
-        $start = time();
+
+        if (!$start) $start = time();
 
         // Check if user exists
         if (!$this->exists_user($userid)) {
@@ -308,11 +309,11 @@ class Club
             if ($row->tariffid==$tariffid) {
                 return array("success"=>false,"message"=>"Tariff already set");
             }
-        }
 
-        // check if tariff is already set to start in the future (this should never happen)
-        if ($row->start>$start) {
-            return array("success"=>false,"message"=>"Tariff already set to start in the future");
+            // check if tariff is already set to start in the future (this should never happen)
+            if ($row->start>$start) {
+                return array("success"=>false,"message"=>"Tariff already set to start in the future");
+            }
         }
 
         // Add tariff to user
@@ -333,6 +334,17 @@ class Club
         } else {
             return false;
         }
+    }
+
+    // Get user tariff history
+    public function get_user_tariff_history($userid) {
+        $userid = (int) $userid;
+        $result = $this->mysqli->query("SELECT tariffid,start FROM user_tariffs WHERE userid=$userid ORDER BY start ASC");
+        $history = array();
+        while ($row = $result->fetch_object()) {
+            $history[] = $row;
+        }
+        return $history;
     }
 
     // Check if a tariff exists
