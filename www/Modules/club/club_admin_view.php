@@ -1,10 +1,8 @@
+<?php defined('EMONCMS_EXEC') or die('Restricted access'); ?>
+
 <script src="<?php echo $path; ?>Lib/vue.min.js"></script>
 
-<h3>Clubs</h3>
-
-<ul class="breadcrumb">
-    <li class="active">Clubs</li>
-</ul>
+<h3>EnergyLocal Clubs</h3>
 
 <div id="app">
 
@@ -13,10 +11,10 @@
     </div>
 
     <table class="table table-striped">
-        <tr v-for="club in clubs">
-            <td><a :href="'accounts?clubid='+club.id">{{ club.name }}</a></td>
+        <tr v-for="(club,index) in clubs">
+            <td><a :href="'<?php echo $path; ?>account/list?clubid='+club.id">{{ club.name }}</a></td>
             <td>{{ club.created }}</td>
-            <td><button class="btn btn-mini btn-danger" @click="remove(club.id)">Delete</button></td>
+            <td><button class="btn btn-mini btn-danger" @click="remove(index)">Delete</button></td>
         </tr>
     </table>
 
@@ -55,7 +53,13 @@
                     }
                 });
             },
-            remove: function(id) {
+            remove: function(index) {
+                var id = this.clubs[index].id;
+                var club_name = this.clubs[index].name;
+                
+                // confirm
+                if (!confirm("Are you sure you want to delete club: "+club_name)) return;
+
                 $("#error").hide();
                 $.get('<?php echo $path; ?>club/delete.json', {id: id}, function(data) {
                     if (data.success) {

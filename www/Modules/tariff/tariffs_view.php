@@ -7,17 +7,11 @@ $v = 1;
 
 <div id="app">
 
-	<h3>EnergyLocal</h3>
-
-	<ul class="breadcrumb">
-		<li><a href="<?php echo $path; ?>club/list">Clubs</a> <span class="divider">/</span></li>
-        <li class="active"><?php echo $club_name; ?> <span class="divider">/</span></li>
-        <li class="active">Tariffs</li>
-	</ul>
+	<h3><?php echo $club_name; ?>: Tariffs</h3>
 
 	<ul class="nav nav-tabs">
-		<li><a href="<?php echo $path; ?>club/accounts?clubid=<?php echo $clubid; ?>">Accounts</a></li>
-		<li class="active"><a href="<?php echo $path; ?>club/tariffs?clubid=<?php echo $clubid; ?>">Tariffs</a></li>
+		<li><a href="<?php echo $path; ?>account/list?clubid=<?php echo $clubid; ?>">Accounts</a></li>
+		<li class="active"><a href="<?php echo $path; ?>tariff/list?clubid=<?php echo $clubid; ?>">Tariffs</a></li>
 	</ul>
 
 	<div class="input-prepend input-append">
@@ -156,7 +150,7 @@ $v = 1;
 			add_tariff: function() {
 				// url encode post body
 				// club/tariff/create
-				$.post(path+"club/tariff/create", {
+				$.post(path+"tariff/create", {
 						club: clubid,
 						name: app.new_tariff_name
 					})
@@ -169,14 +163,14 @@ $v = 1;
 					});
 			},
 			list_tariffs: function() {
-				$.get(path+"club/tariff/list?clubid="+clubid)
+				$.get(path+"tariff/list.json?clubid="+clubid)
 					.done(function(data) {
 						app.tariffs = data;
 					});
 			},
 			delete_tariff: function(id) {
 				if (confirm("Are you sure you want to delete this tariff?")) {
-					$.get(path+"club/tariff/delete", {
+					$.get(path+"tariff/delete", {
 							id: id
 						})
 						.done(function(data) {
@@ -192,7 +186,7 @@ $v = 1;
 				app.selected_tariff = index;
 
 				// get tariff periods
-				$.get(path+"club/tariff/periods", {
+				$.get(path+"tariff/periods", {
 						id: app.tariffs[index].id
 					})
 					.done(function(data) {
@@ -241,7 +235,7 @@ $v = 1;
 				};
 				app.tariff_periods.push(period);
 
-				$.post(path+"club/tariff/addperiod", period)
+				$.post(path+"tariff/addperiod", period)
 					.done(function(data) {
 						if (data.success) {
 							app.edit_tariff(app.selected_tariff);
@@ -256,7 +250,7 @@ $v = 1;
 			save_period: function(index) {
 				app.edit_period_index = false;
 				// save period
-				$.post(path+"club/tariff/saveperiod", app.tariff_periods[index])
+				$.post(path+"tariff/saveperiod", app.tariff_periods[index])
 					.done(function(data) {
 						if (data.success) {
 							app.edit_tariff(app.selected_tariff);
@@ -267,7 +261,7 @@ $v = 1;
 			},
 			delete_period: function(index) {
 				if (confirm("Are you sure you want to delete this period?")) {
-					$.get(path+"club/tariff/deleteperiod", {
+					$.get(path+"tariff/deleteperiod", {
 							tariffid: app.tariff_periods[index].tariffid,
 							index: app.tariff_periods[index].index
 						})

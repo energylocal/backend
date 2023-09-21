@@ -8,25 +8,6 @@
    Part of the OpenEnergyMonitor project:
    http://openenergymonitor.org
 
-$schema['tariffs'] = array(
-    'id' => array('type' => 'int(11)', 'Null'=>false, 'Key'=>'PRI', 'Extra'=>'auto_increment'),
-    'clubid' => array('type' => 'int(11)'),
-    'name' => array('type' => 'varchar(32)', "default"=>""),
-    'created' => array('type' => 'int(10)'),
-    'first_assigned' => array('type' => 'int(10)'),
-    'last_assigned' => array('type' => 'int(10)')
-);
-
-$schema['tariff_periods'] = array(
-    'id' => array('type' => 'int(11)'),
-    'name' => array('type' => 'varchar(16)'),
-    'start' => array('type' => 'varchar(16)'),
-    'end' => array('type' => 'varchar(16)'),
-    'generator' => array('type' => 'float'),
-    'import' => array('type' => 'float'),
-    'color' => array('type' => 'varchar(32)')
-);
-
 */
 
 // no direct access
