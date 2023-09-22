@@ -12,6 +12,8 @@ $mysqli->query("TRUNCATE TABLE `tariffs`");
 $mysqli->query("TRUNCATE TABLE `tariff_periods`");
 $mysqli->query("TRUNCATE TABLE `user_tariffs`");
 
+die;
+
 $user_class = $user;
 $user = false;
 
