@@ -24,12 +24,17 @@ function tariff_controller()
     require_once "Modules/tariff/tariff_model.php";
     $tariff = new Tariff($mysqli);
 
+    // ----- Tariffs ------
+
     // List tariffs
+    // /tariff/list.json?clubid=1 (returns json list of tariffs) (PUBLIC)
+    // /tariff/list?clubid=1 (returns html view of tariffs)
     if ($route->action == 'list') {
         if ($route->format == "json") {
             $clubid =(int) get('clubid',true);
             return $tariff->list($clubid);
-        } else {
+
+        } else if ($session['admin']) {
             $clubid = get('clubid',false);
             if (!$club_info = $club->get($clubid)) {
                 return "Club not found";
@@ -43,9 +48,9 @@ function tariff_controller()
     }
 
     // Add a new tariff
-    if ($route->action == 'create') {
+    // /tariff/create, POST BODY club=1&name=MyTariff, (returns json success or fail)
+    if ($route->action == 'create' && $session['admin']) {
         $route->format = "json";
-        
         return $tariff->create(
             post('club',true),
             post('name',true)
@@ -53,13 +58,17 @@ function tariff_controller()
     }
 
     // Delete tariff
-    if ($route->action == 'delete') {
+    // /tariff/delete?id=1 (returns json success or fail)
+    if ($route->action == 'delete' && $session['admin']) {
         $route->format = "json";
         $id = get('id',true);
         return $tariff->delete($id);
     }
 
-    // List tariff periods
+    // ----- Periods ------
+
+    // List tariff periods (PUBLIC)
+    // /tariff/periods?id=1 (returns json list of periods)
     if ($route->action == 'periods') {
         $route->format = "json";
         $id = get('id',true);
@@ -67,13 +76,14 @@ function tariff_controller()
     }
 
     // Add period
-    if ($route->action == 'addperiod') {
+    // /tariff/addperiod, POST BODY tariffid=1&name=MyPeriod&weekend=0&start=0&generator=15&import=20&color=#000 (returns json success or fail)
+    if ($route->action == 'addperiod' && $session['admin']) {
         $route->format = "json";
         return $tariff->add_period(
             post('tariffid',true),
             post('name',true),
+            post('weekend',true),
             post('start',true),
-            post('end',true),
             post('generator',true),
             post('import',true),
             post('color',true)
@@ -81,7 +91,8 @@ function tariff_controller()
     }
 
     // Delete period
-    if ($route->action == 'deleteperiod') {
+    // /tariff/deleteperiod?tariffid=1&index=0 (returns json success or fail)
+    if ($route->action == 'deleteperiod' && $session['admin']) {
         $route->format = "json";
         return $tariff->delete_period(
             get('tariffid',true),
@@ -90,14 +101,15 @@ function tariff_controller()
     }
 
     // Save period
-    if ($route->action == 'saveperiod') {
+    // /tariff/saveperiod, POST BODY tariffid=1&index=0&name=MyPeriod&weekend=0&start=0&generator=15&import=20&color=#000 (returns json success or fail)
+    if ($route->action == 'saveperiod' && $session['admin']) {
         $route->format = "json";
         return $tariff->save_period(
             post('tariffid',true),
             post('index',true),
             post('name',true),
+            post('weekend',true),
             post('start',true),
-            post('end',true),
             post('generator',true),
             post('import',true),
             post('color',true)

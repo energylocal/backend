@@ -14,7 +14,7 @@ $schema['tariff_periods'] = array(
     'index' => array('type' => 'int(11)'),
     'name' => array('type' => 'varchar(16)'),
     'weekend' => array('type' => 'tinyint(1)'),
-    'start' => array('type' => 'varchar(16)'),
+    'start' => array('type' => 'int(11)'),
     'generator' => array('type' => 'float'),
     'import' => array('type' => 'float'),
     'color' => array('type' => 'varchar(32)')
