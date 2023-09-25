@@ -49,6 +49,48 @@ function account_controller()
             }
         }
 
+        if ($route->action == 'add') {
+            if ($route->format == 'json') {
+                return $account->add_account(
+                    post('clubid',true),
+                    post('username',true),
+                    post('password',true),
+                    post('email',true)
+                );
+            } else {
+                $clubid = get('clubid',true);
+                $club_name = $club->get_name($clubid);
+
+                return view("Modules/account/account_view.php", array(
+                    "mode"=>"add",
+                    "userid"=>0,
+                    "clubid"=>$clubid,
+                    "club_name"=>$club_name
+                ));
+            }
+        }
+
+        if ($route->action == 'edit') {
+            if ($route->format == 'json') {
+                return $account->edit_account(
+                    post('userid',true),
+                    post('username',true),
+                    post('email',true)
+                );
+            } else {
+                $userid = get('userid',true);
+                $clubid = $account->get_club_id($userid);
+                $club_name = $club->get_name($clubid);
+
+                return view("Modules/account/account_view.php", array(
+                    "mode"=>"edit",
+                    "userid"=>$userid,
+                    "clubid"=>$clubid,
+                    "club_name"=>$club_name
+                ));
+            }
+        }
+
         if ($route->action == 'view') {
             $userid = get('userid',true);
             
@@ -68,34 +110,7 @@ function account_controller()
             return $account->get($userid);
         }
 
-        if ($route->action == 'add'){
-            $route->format = "json";
-            return $club->add_account(
-                post('id',true),
-                post('username',true),
-                post('password',true),
-                post('email',true),
-                post('mpan',true),
-                post('cad_serial',true),
-                post('octopus_apikey',true),
-                post('meter_serial',true)
-            );
-        }
-
-        if ($route->action == 'edit') {
-            $route->format = "json";
-            return $club->edit_account(
-                post('id',true),
-                post('userid',true),
-                post('username',true),
-                post('email',true),
-                post('mpan',true),
-                post('cad_serial',true),
-                post('octopus_apikey',true),
-                post('meter_serial',true)
-            );
-        }
-
+        /*
         // Set users current tariff
         if ($route->subaction == 'set_tariff') {
             $route->format = "json";
@@ -113,6 +128,7 @@ function account_controller()
             $feed_class = new Feed($mysqli,$redis,$settings['feed']);
             return $club->account_data_status($clubid,$feed_class);
         }
+        */
     }
     
     return false;

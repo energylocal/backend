@@ -30,7 +30,7 @@ class Account
     public function list($id) {
         $id = (int) $id;
 
-        $result = $this->mysqli->query("SELECT userid, mpan, cad_serial, meter_serial, octopus_apikey FROM club_accounts WHERE clubid=$id");
+        $result = $this->mysqli->query("SELECT userid FROM club_accounts WHERE clubid=$id");
         $accounts = array();
         while ($row = $result->fetch_object()) {
             $accounts[] = $row;
@@ -43,6 +43,7 @@ class Account
             $account->email = $user->email;
 
             // Add tariff details
+            /*
             if ($user_tariff = $this->get_user_tariff($account->userid)) {
                 $tariff = $this->get_tariff($user_tariff);
                 $account->tariff_id = $tariff->id;
@@ -50,7 +51,7 @@ class Account
             } else {
                 $account->tariff_id = false;
                 $account->tariff_name = "";
-            }
+            }*/
         }
 
         return $accounts;
@@ -59,7 +60,7 @@ class Account
     public function get($userid) {
         $userid = (int) $userid;
 
-        $result = $this->mysqli->query("SELECT userid, mpan, cad_serial, meter_serial, octopus_apikey FROM club_accounts WHERE userid='$userid'");
+        $result = $this->mysqli->query("SELECT userid FROM club_accounts WHERE userid='$userid'");
         if (!$account = $result->fetch_object()) {
             return false;
         }
@@ -69,6 +70,7 @@ class Account
         $account->email = $user->email;
 
         // Add tariff details
+        /*
         if ($user_tariff = $this->get_user_tariff($account->userid)) {
             $tariff = $this->get_tariff($user_tariff);
             $account->tariff_id = $tariff->id;
@@ -76,11 +78,12 @@ class Account
         } else {
             $account->tariff_id = false;
             $account->tariff_name = "";
-        }
+        }*/
 
         return $account;
     }
 
+    /*
     public function account_data_status($id,$feed_class) {
         $id = (int) $id;
         $result = $this->mysqli->query("SELECT userid FROM club_accounts WHERE clubid=$id");
@@ -103,14 +106,14 @@ class Account
             $accounts[$userid] = $row;
         }
         return $accounts;
-    }
+    }*/
 
     // Add a user to a club
-    public function add_account($id,$username,$password,$email,$mpan,$cad_serial,$octopus_apikey,$meter_serial) {
-        $id = (int) $id;
+    public function add_account($clubid,$username,$password,$email) {
+        $clubid = (int) $clubid;
 
         // Check if club exists
-        if (!$this->exists($id)) {
+        if (!$this->club_exists($clubid)) {
             return array("success"=>false,"message"=>"Club does not exist");
         }
         // Register user using user model
@@ -125,27 +128,22 @@ class Account
             return array("success"=>false,"message"=>"User does not exist");
         }
         // Check if user is already in club
-        if ($this->exists_account($id,$userid)) {
+        if ($this->exists_account($clubid,$userid)) {
             return array("success"=>false,"message"=>"User already in club");
         }
 
         // Add user to club
-        $stmt = $this->mysqli->prepare("INSERT INTO club_accounts (clubid,userid,mpan,cad_serial,octopus_apikey,meter_serial) VALUES (?,?,?,?,?,?)");
-        $stmt->bind_param("iissss",$id,$userid,$mpan,$cad_serial,$octopus_apikey,$meter_serial);
+        $stmt = $this->mysqli->prepare("INSERT INTO club_accounts (clubid,userid) VALUES (?,?)");
+        $stmt->bind_param("ii",$clubid,$userid);
         $stmt->execute();
         $stmt->close();
         return array("success"=>true, "userid"=>$userid);
     }
 
     // Edit a user in a club
-    public function edit_account($id,$userid,$username,$email,$mpan,$cad_serial,$octopus_apikey,$meter_serial) {
-        $id = (int) $id;
+    public function edit_account($userid,$username,$email) {
         $userid = (int) $userid;
 
-        // Check if club exists
-        if (!$this->exists($id)) {
-            return array("success"=>false,"message"=>"Club does not exist");
-        }
         // Check if user exists
         if (!$this->exists_user($userid)) {
             return array("success"=>false,"message"=>"User does not exist");
@@ -166,17 +164,26 @@ class Account
                 return $result;
             }
         }
-
-        // Check if user is already in club
-        if (!$this->exists_account($id,$userid)) {
-            return array("success"=>false,"message"=>"User is not in club");
-        }
+        
         // Edit user in club
-        $stmt = $this->mysqli->prepare("UPDATE club_accounts SET mpan=?, cad_serial=?, octopus_apikey=?, meter_serial=? WHERE clubid=? AND userid=?");
-        $stmt->bind_param("ssssii",$mpan,$cad_serial,$octopus_apikey,$meter_serial,$id,$userid);
+        /*
+        $stmt = $this->mysqli->prepare("UPDATE club_accounts SET ... WHERE clubid=? AND userid=?");
+        $stmt->bind_param("ii",$id,$userid);
         $stmt->execute();
         $stmt->close();
+        */
         return array("success"=>true);
+    }
+
+    // check if club exists
+    public function club_exists($clubid) {
+        $clubid = (int) $clubid;
+        $result = $this->mysqli->query("SELECT id FROM club WHERE id=$clubid");
+        if ($row = $result->fetch_object()) {
+            return true;
+        } else {
+            return false;
+        }
     }
     
     // Check if a user exists in user table
@@ -233,7 +240,7 @@ class Account
     }
 
     // -------------------
-
+    /*
     // Add tariff to user
     public function set_user_tariff($userid,$tariffid,$start=false) {
         $userid = (int) $userid;
@@ -302,4 +309,5 @@ class Account
         $result = $this->mysqli->query("SELECT * FROM tariffs WHERE id=$tariffid");
         return $result->fetch_object();
     }
+    */
 }

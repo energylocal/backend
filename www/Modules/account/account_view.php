@@ -6,32 +6,39 @@ $v = 1;
 
 <div id="app">
 
-    <h3><?php echo $club_name; ?>: {{ account.username }}</h3>
+    <!--<h3><?php echo $club_name; ?>: {{ account.username }}</h3>-->
 
     <h3 v-if="mode=='add'">Add account</h3>
     <h3 v-if="mode=='edit'">Edit account</h3>
 
-    <div class="row-fluid" style="max-width:800px">
-        <div class="span4">
+    <div class="row">
+        <div class="span3">
+            <p>
+                <label>Club</label>
+                <input type="text" v-model="club_name" disabled>
+            </p>
+        </div>
+        <div class="span3">
             <p>
                 <label>Username</label>
-                <input type="text" v-model="account.username">
+                <input type="text" v-model="account.username" @change="update">
             </p>
         </div>
-        <div class="span4" v-if="mode=='add'">
+        <div class="span3" v-if="mode=='add'">
             <p>
                 <label>Password</label>
-                <input type="text" v-model="account.password">
+                <input type="text" v-model="account.password" @change="update">
             </p>
         </div>
-        <div class="span4">
+        <div class="span3">
             <p>
                 <label>Email</label>
-                <input type="text" v-model="account.email">
+                <input type="text" v-model="account.email" @change="update">
             </p>
         </div>
     </div>
 
+    <!--
     <p><b>Data sources:</b></p>
 
     <div class="row-fluid" style="max-width:800px">
@@ -64,6 +71,7 @@ $v = 1;
             </p>
         </div>
     </div>
+    
 
     <p><b>Tariff:</b></p>
 
@@ -77,11 +85,12 @@ $v = 1;
             </p>
         </div>
     </div>
+    -->
 
-    <a href="<?php echo $path; ?>account/list?clubid=<?php echo $clubid; ?>"><button class="btn">Cancel</button></a>
+    <a href="<?php echo $path; ?>account/list?clubid=<?php echo $clubid; ?>"><button class="btn">Account list</button></a>
     <button class="btn btn-info" @click="save_account" v-if="mode=='add'">Add account</button>
-    <button class="btn btn-warning" @click="save_account" v-if="mode=='edit'">Save changes</button>
-    <button class="btn btn-success" @click="fetch_octopus_data">Fetch Octopus data</button>
+    <button class="btn btn-warning" @click="save_account" v-if="mode=='edit' && changed">Save changes</button>
+    <!--<button class="btn btn-success" @click="fetch_octopus_data">Fetch Octopus data</button>-->
 
     <div class="alert alert-error" style="margin-top:20px; width:440px" v-if="show_error" v-html="error_message"></div>
     <div class="alert alert-success" style="margin-top:20px; width:440px" v-if="show_success" v-html="success_message"></div>
@@ -94,39 +103,48 @@ $v = 1;
 <script>
     var clubid = <?php echo $clubid; ?>;
     var userid = <?php echo $userid; ?>;
+    var mode = "<?php echo $mode; ?>";
+
+    if (mode=='edit') {
+        get_account(userid);
+    }
     
-    get_account();
-    tariff_list();
+    //tariff_list();
 
     app = new Vue({
         el: '#app',
         data: {
             userid: <?php echo $userid; ?>,
-            account: {},
-            tariffs: [],
-            mode: 'edit', // edit, add
+            club_name: "<?php echo $club_name; ?>",
+            account: {
+                username: '',
+                password: '',
+                email: ''
+            },
+            //tariffs: [],
+            mode: "<?php echo $mode; ?>",
+            changed: false,
             show_error: false,
             error_message: '',
             show_success: false,
             success_message: ''
         },
         methods: {
+            update: function () {
+                this.changed = true;
+            },
             
             save_account: function() {
                 var params = {
                     'id': clubid,
                     'username': encodeURIComponent(this.account.username),
-                    'email': encodeURIComponent(this.account.email),
-                    'mpan': this.account.mpan,
-                    'cad_serial': this.account.cad_serial,
-                    'octopus_apikey': this.account.octopus_apikey,
-                    'meter_serial': this.account.meter_serial
+                    'email': encodeURIComponent(this.account.email)
                 };
 
                 var api = "";
                 if (this.mode == 'add') {
                     api = "account/add.json";
-                    params["password"] = encodeURIComponent(this.edit.password);
+                    params["password"] = encodeURIComponent(this.account.password);
                 } else if (this.mode == 'edit') {
                     api = "account/edit.json";
                     params['userid'] = this.userid;
@@ -135,15 +153,16 @@ $v = 1;
                 this.show_error = false;
                 $.post('<?php echo $path; ?>' + api, params, function(result) {
                     if (result.success) {
-                    
+                        app.show_success = true;
+                        app.success_message = "Account saved";
+                        app.changed = false;
                     } else {
                         app.error_message = "<b>Error:</b> " + result.message;
                         app.show_error = true;
                     }
                 });
-
-
             },
+            /*
             fetch_octopus_data: function() {
                 app.show_success = true;
                 app.success_message = "Fetching data...";
@@ -164,14 +183,14 @@ $v = 1;
                         app.error_message = "<b>Error:</b> " + result.message;
                     }
                 });
-            },
+            },*/
             graph: function() {
                 alert("graph");
             }
         }
     });
 
-    function get_account() {
+    function get_account(userid) {
         $.getJSON('<?php echo $path; ?>account/get.json', {
             userid: userid
         }, function(result) {
@@ -179,11 +198,12 @@ $v = 1;
         });
     }
 
+    /*
     function tariff_list() {
         $.getJSON('<?php echo $path; ?>club/tariff/list.json', {
             clubid: clubid
         }, function(result) {
             app.tariffs = result;
         });
-    }
+    }*/
 </script>
