@@ -227,6 +227,17 @@ class Tariff
         return $result->fetch_object();
     }
 
+    // Get tariff name
+    public function get_tariff_name($tariffid) {
+        $tariffid = (int) $tariffid;
+        $result = $this->mysqli->query("SELECT name FROM tariffs WHERE id=$tariffid");
+        if ($row = $result->fetch_object()) {
+            return $row->name;
+        } else {
+            return false;
+        }
+    }
+
     // User tariff methods
 
     // Add tariff to user
@@ -282,11 +293,16 @@ class Tariff
     }
 
     // Get user tariff history
-    public function get_user_tariff_history($userid) {
+    public function get_user_tariff_history($userid, $with_names = false) {
         $userid = (int) $userid;
         $result = $this->mysqli->query("SELECT tariffid,start FROM user_tariffs WHERE userid=$userid ORDER BY start ASC");
         $history = array();
         while ($row = $result->fetch_object()) {
+            if ($with_names) {
+                $row->tariff_name = $this->get_tariff_name($row->tariffid);
+                // convert start to date 12th September 2013 00:00
+                $row->start = date("jS F Y H:i",$row->start);
+            }
             $history[] = $row;
         }
         return $history;

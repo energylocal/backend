@@ -116,9 +116,17 @@ function tariff_controller()
         );
     }
 
-    // Set users current tariff
-    // /tariff/user/set?userid=1&tariffid=1 (returns json success or fail)
+    
     if ($route->action == 'user') {
+        // Get users tariff history
+        // /tariff/user/history?userid=1 (returns json list of tariff history)
+        if ($route->subaction == 'history' && $session['admin']) {
+            $route->format = "json";
+            return $tariff->get_user_tariff_history(get('userid',true),true);
+        }
+
+        // Set users current tariff
+        // /tariff/user/set?userid=1&tariffid=1 (returns json success or fail)
         if ($route->subaction == 'set' && $session['admin']) {
             $route->format = "json";
             return $tariff->set_user_tariff(

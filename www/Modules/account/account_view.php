@@ -85,7 +85,18 @@ $v = 1;
             </p>
         </div>
     </div>
-    
+
+    <p><b>Tariff history</b></p>
+    <table class="table table-striped">
+        <tr>
+            <th>Tariff ID</th>
+            <th>Start date</th>
+        </tr>
+        <tr v-for="tariff in tariff_history">
+            <td>{{ tariff.tariff_name }}</td>
+            <td>{{ tariff.start }}</td>
+        </tr>
+    </table>
 
     <a href="<?php echo $path; ?>account/list?clubid=<?php echo $clubid; ?>"><button class="btn">Account list</button></a>
     <button class="btn btn-info" @click="save_account" v-if="mode=='add'">Add account</button>
@@ -107,6 +118,7 @@ $v = 1;
 
     if (mode=='edit') {
         get_account(userid);
+        get_user_tariff_history(userid);
     }
     
     tariff_list();
@@ -114,8 +126,10 @@ $v = 1;
     app = new Vue({
         el: '#app',
         data: {
+            mode: "<?php echo $mode; ?>",
             userid: <?php echo $userid; ?>,
             club_name: "<?php echo $club_name; ?>",
+
             account: {
                 username: '',
                 password: '',
@@ -123,7 +137,8 @@ $v = 1;
                 tariff_id: 'UNASSIGNED'
             },
             tariffs: [],
-            mode: "<?php echo $mode; ?>",
+            tariff_history: [],
+
             changed: false,
             show_error: false,
             error_message: '',
@@ -202,6 +217,14 @@ $v = 1;
         }, function(result) {
             app.account = result;
             app.account.tariff_id = 'UNASSIGNED';
+        });
+    }
+
+    function get_user_tariff_history(userid) {
+        $.getJSON('<?php echo $path; ?>tariff/user/history.json', {
+            userid: userid
+        }, function(result) {
+            app.tariff_history = result;
         });
     }
 
