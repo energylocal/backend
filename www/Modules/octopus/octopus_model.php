@@ -14,12 +14,121 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 class OctopusAPI
 {
+    private $mysqli;
     private $feed;
 
-    public function __construct($feed)
+    public function __construct($mysqli, $feed)
     {
+        $this->mysqli = $mysqli;
         $this->feed = $feed;
     }
+    
+    public function user_list($clubid=false) {
+        $clubid = (int) $clubid;
+        
+        $result = $this->mysqli->query("SELECT * FROM octopus_users");
+        $accounts = array();
+        while ($row = $result->fetch_object()) {
+            $accounts[] = $row;
+        }
+        return $accounts;
+    }
+
+    public function user_get($userid) {
+        $userid = (int) $userid;
+        $result = $this->mysqli->query("SELECT * FROM octopus_users WHERE userid=$userid");
+        if ($row = $result->fetch_object()) {
+            return $row;
+        } else {
+            return false;
+        }
+    }
+    
+    public function user_add($userid,$mpan,$meter_serial,$octopus_apikey,$type) {
+        // Validate input
+        $userid = (int) $userid;
+
+        // Default type
+        $type = "consumption";
+
+        // Validate input
+        $result = $this->validate($mpan, $meter_serial, $octopus_apikey);
+        if (!$result['success']) {
+            return $result;
+        }
+
+        // Check if user already exists
+        if ($this->user_exists($userid)) {
+            return array("success"=>false,"message"=>"User already exists");
+        }
+
+        $stmt = $this->mysqli->prepare("INSERT INTO octopus_users (userid,mpan,meter_serial,octopus_apikey,type) VALUES (?,?,?,?,?)");
+        $stmt->bind_param("issss",$userid,$mpan,$meter_serial,$octopus_apikey,$type);
+        $result = $stmt->execute();
+        $stmt->close();
+
+        if ($result) {
+            return array("success"=>true,"message"=>"User added");
+        } else {
+            return array("success"=>false,"message"=>"Error adding user");
+        }
+    }
+    
+    public function user_edit($userid,$mpan,$meter_serial,$octopus_apikey,$type) {
+        // Validate input
+        $userid = (int) $userid;
+
+        // Validate input
+        $result = $this->validate($mpan, $meter_serial, $octopus_apikey);
+        if (!$result['success']) {
+            return $result;
+        }
+
+        // Default type
+        $type = "consumption";
+
+        // Check if user already exists
+        if (!$this->user_exists($userid)) {
+            return array("success"=>false,"message"=>"User does not exist");
+        }
+        
+        // Update user
+        $stmt = $this->mysqli->prepare("UPDATE octopus_users SET mpan=?, meter_serial=?, octopus_apikey=?, type=? WHERE userid=?");
+        $stmt->bind_param("ssssi",$mpan,$meter_serial,$octopus_apikey,$type,$userid);
+        $result = $stmt->execute();
+        $stmt->close();
+
+        if ($result) {
+            return array("success"=>true,"message"=>"User updated");
+        } else {
+            return array("success"=>false,"message"=>"Error updating user");
+        }
+    }
+    
+    public function user_remove($userid) {
+        // Validate input
+        $userid = (int) $userid;
+
+        // Check if user already exists
+        if (!$this->user_exists($userid)) {
+            return array("success"=>false,"message"=>"User does not exist");
+        }
+
+        $this->mysqli->query("DELETE FROM octopus_users WHERE userid=$userid");
+        return array("success"=>true,"message"=>"User removed");
+    }
+
+    public function user_exists($userid) {
+        $userid = (int) $userid;
+        $result = $this->mysqli->query("SELECT userid FROM octopus_users WHERE userid=$userid");
+        if ($row = $result->fetch_object()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    // ---------------------------------------------------
     
     public function account_data_status($id,$feed_class) {
         $id = (int) $id;
@@ -45,23 +154,15 @@ class OctopusAPI
         return $accounts;
     }
 
-    public function fetch_data($userid, $mpan, $meter_serial, $octopus_apikey)
+    public function fetch_data($userid)
     {
-        // Validate MPAN
-        if (strlen("$mpan") != 13) {
-            return array("success" => false, "message" => "Invalid MPAN, must be 13 digits $mpan");
+        $userid = (int) $userid;
+        if (!$result = $this->user_get($userid)) {
+            return array("success" => false, "message" => "User does not exist");
         }
-        if ($mpan != (int)$mpan) {
-            return array("success" => false, "message" => "Invalid MPAN, must be numeric $mpan");
-        }
-        // Validate meter serial
-        if (strlen("$meter_serial") != 10) {
-            return array("success" => false, "message" => "Invalid meter serial");
-        }
-        // Validate octopus apikey
-        if (strlen("$octopus_apikey") != 32 || strpos($octopus_apikey, "sk_live_") != 0) {
-            return array("success" => false, "message" => "Invalid octopus apikey");
-        }
+        $mpan = $result->mpan;
+        $meter_serial = $result->meter_serial;
+        $octopus_apikey = $result->octopus_apikey;
 
         // Get octopus feed id or create feed
         if (!$feedid = $this->feed->get_id($userid, "use_hh_octopus")) {
@@ -117,22 +218,15 @@ class OctopusAPI
         return array("success" => false, "message" => "Unknown error");
     }
 
-    public function fetch_bills($userid, $mpan, $meter_serial, $octopus_apikey){
-        // Validate MPAN
-        if (strlen("$mpan") != 13) {
-            return array("success" => false, "message" => "Invalid MPAN, must be 13 digits $mpan");
+    public function fetch_bills($userid) {
+
+        $userid = (int) $userid;
+        if (!$result = $this->user_get($userid)) {
+            return array("success" => false, "message" => "User does not exist");
         }
-        if ($mpan != (int)$mpan) {
-            return array("success" => false, "message" => "Invalid MPAN, must be numeric $mpan");
-        }
-        // Validate meter serial
-        if (strlen("$meter_serial") != 10) {
-            return array("success" => false, "message" => "Invalid meter serial");
-        }
-        // Validate octopus apikey
-        if (strlen("$octopus_apikey") != 32 || strpos($octopus_apikey, "sk_live_") != 0) {
-            return array("success" => false, "message" => "Invalid octopus apikey");
-        }
+        $mpan = $result->mpan;
+        $meter_serial = $result->meter_serial;
+        $octopus_apikey = $result->octopus_apikey;
 
         $params = array(
             "page" => 1,
@@ -176,5 +270,26 @@ class OctopusAPI
         $resp = curl_exec($curl);
         curl_close($curl);
         return $resp;
+    }
+
+    private function validate($mpan, $meter_serial, $octopus_apikey) {
+
+        // Validate MPAN
+        if (strlen("$mpan") != 13) {
+            return array("success" => false, "message" => "Invalid MPAN, must be 13 digits $mpan");
+        }
+        if ($mpan != (int)$mpan) {
+            return array("success" => false, "message" => "Invalid MPAN, must be numeric $mpan");
+        }
+        // Validate meter serial
+        if (strlen("$meter_serial") != 10) {
+            return array("success" => false, "message" => "Invalid meter serial");
+        }
+        // Validate octopus apikey
+        if (strlen("$octopus_apikey") != 32 || strpos($octopus_apikey, "sk_live_") != 0) {
+            return array("success" => false, "message" => "Invalid octopus apikey");
+        }
+
+        return array("success" => true, "message" => "Validated");
     }
 }

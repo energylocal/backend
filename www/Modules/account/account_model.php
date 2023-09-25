@@ -212,6 +212,17 @@ class Account
         }
     }
 
+    // check if user exists in users table
+    public function user_exists($userid) {
+        $userid = (int) $userid;
+        $result = $this->mysqli->query("SELECT id FROM users WHERE id=$userid");
+        if ($row = $result->fetch_object()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     // Fetch user details from user table
     public function get_user($userid) {
         $userid = (int) $userid;

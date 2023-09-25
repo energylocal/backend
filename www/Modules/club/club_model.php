@@ -15,14 +15,10 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 class Club
 {
     private $mysqli;
-    private $redis;
-    private $user;
 
-    public function __construct($mysqli,$redis,$user)
+    public function __construct($mysqli)
     {
         $this->mysqli = $mysqli;
-        $this->redis = $redis;
-        $this->user = $user;
         $this->log = new EmonLogger(__FILE__);
     }
 
