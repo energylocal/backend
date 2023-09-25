@@ -16,6 +16,17 @@
             <td>{{ account.mpan }}</td>
             <td>{{ account.meter_serial }}</td>
             <td>{{ account.octopus_apikey }}</td>
+            <td>
+            <span v-if="account.days">
+                <span class="label label-success" v-if="account.updated<7" :title="account.days | toFixed(0) + ' days of data'" @click="graph(account.feedid)">
+                    {{ account.updated | toFixed(0) }}d ago</span>
+                <span class="label label-warning" v-else-if="account.updated<31" :title="account.days | toFixed(0) + ' days of data'" @click="graph(account.feedid)">
+                    {{ account.updated | toFixed(0) }}d ago</span>
+                <span class="label label-important" v-else :title="account.days | toFixed(0) + ' days of data'" @click="graph(account.feedid)">
+                    {{ account.updated | toFixed(0) }}d ago</span>
+            </span>
+            <span v-else class="label">no data</span>
+            </td>
             <td><button class="btn btn-mini btn-primary" @click="load_data(index)">Load data</button></td>
             <td><button class="btn btn-mini btn-danger" @click="remove(index)">Delete</button></td>
         </tr>
@@ -92,6 +103,14 @@
                         $("#error").html("<b>Error:</b> "+data.message).show();
                     }
                 });
+            }
+        },
+        filters: {
+            toFixed: function(value, decimals) {
+                if (!value) value = 0;
+                if (!decimals) decimals = 0;
+                value = value.toFixed(decimals);
+                return value;
             }
         }
     });

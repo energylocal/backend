@@ -29,6 +29,13 @@ class OctopusAPI
         $result = $this->mysqli->query("SELECT * FROM octopus_users");
         $accounts = array();
         while ($row = $result->fetch_object()) {
+            // Get data status
+            if ($status = $this->account_data_status($row->userid)) {
+                $row->days = $status['days'];
+                $row->updated = $status['updated'];
+                $row->feedid = $status['feedid'];
+            }
+
             $accounts[] = $row;
         }
         return $accounts;
@@ -130,29 +137,19 @@ class OctopusAPI
     
     // ---------------------------------------------------
     
-    public function account_data_status($id,$feed_class) {
-        $id = (int) $id;
-        $result = $this->mysqli->query("SELECT userid FROM club_accounts WHERE clubid=$id");
-        $accounts = array();
-        while ($row = $result->fetch_object()) {
-            $userid = $row->userid;
+    public function account_data_status($userid) {
+        $userid = (int) $userid;
 
-            $row = array(                
-                'octopus'=>array('days'=>0,'updated'=>0)                 
-            );
-
-            if ($feedid = $feed_class->get_id($userid,"use_hh_octopus")) {
-                if ($meta = $feed_class->get_meta($feedid)) {
-                    $row['octopus']['days'] = $meta->npoints / 48;
-                    $row['octopus']['updated'] = (time() - ($meta->start_time + ($meta->npoints*$meta->interval)))/86400;   
-                    $row['octopus']['feedid'] = $feedid;
-                }
+        if ($feedid = $this->feed->get_id($userid,"use_hh_octopus")) {
+            if ($meta = $this->feed->get_meta($feedid)) {
+                $days = $meta->npoints / 48;
+                $updated = (time() - ($meta->start_time + ($meta->npoints*$meta->interval)))/86400;   
+                return array('days'=>$days,'updated'=>$updated, 'feedid'=>$feedid);
             }
-
-            $accounts[$userid] = $row;
         }
-        return $accounts;
+        return false;
     }
+    
 
     public function fetch_data($userid)
     {
