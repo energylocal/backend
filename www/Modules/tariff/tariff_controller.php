@@ -115,6 +115,18 @@ function tariff_controller()
             post('color',true)
         );
     }
+
+    // Set users current tariff
+    // /tariff/user/set?userid=1&tariffid=1 (returns json success or fail)
+    if ($route->action == 'user') {
+        if ($route->subaction == 'set' && $session['admin']) {
+            $route->format = "json";
+            return $tariff->set_user_tariff(
+                get('userid',true),
+                get('tariffid',true)
+            );
+        }
+    }
     
     return false;
 }

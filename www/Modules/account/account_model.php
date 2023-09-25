@@ -15,14 +15,14 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 class Account
 {
     private $mysqli;
-    private $redis;
     private $user;
+    private $tariff;
 
-    public function __construct($mysqli,$redis,$user)
+    public function __construct($mysqli,$user,$tariff)
     {
         $this->mysqli = $mysqli;
-        $this->redis = $redis;
         $this->user = $user;
+        $this->tariff = $tariff;
         $this->log = new EmonLogger(__FILE__);
     }
     
@@ -43,15 +43,14 @@ class Account
             $account->email = $user->email;
 
             // Add tariff details
-            /*
-            if ($user_tariff = $this->get_user_tariff($account->userid)) {
-                $tariff = $this->get_tariff($user_tariff);
+            if ($user_tariff = $this->tariff->get_user_tariff($account->userid)) {
+                $tariff = $this->tariff->get_tariff($user_tariff);
                 $account->tariff_id = $tariff->id;
                 $account->tariff_name = $tariff->name;
             } else {
                 $account->tariff_id = false;
                 $account->tariff_name = "";
-            }*/
+            }
         }
 
         return $accounts;
@@ -164,7 +163,7 @@ class Account
                 return $result;
             }
         }
-        
+
         // Edit user in club
         /*
         $stmt = $this->mysqli->prepare("UPDATE club_accounts SET ... WHERE clubid=? AND userid=?");
@@ -205,16 +204,13 @@ class Account
     public function exists_account($id,$userid) {
         $id = (int) $id;
         $userid = (int) $userid;
-        $stmt = $this->mysqli->prepare("SELECT userid FROM club_accounts WHERE clubid=? AND userid=?");
-        $stmt->bind_param("ii",$id,$userid);
-        $stmt->execute();
-        $stmt->store_result();
-        $num_rows = $stmt->num_rows;
-        $stmt->close();
-        if ($num_rows==0) {
+
+        $result = $this->mysqli->query("SELECT userid FROM club_accounts WHERE clubid=$id AND userid=$userid");
+        if ($row = $result->fetch_object()) {
+            return true;
+        } else {
             return false;
         }
-        return true;
     }
 
     // Fetch user details from user table
@@ -238,76 +234,4 @@ class Account
         } 
         return false;
     }
-
-    // -------------------
-    /*
-    // Add tariff to user
-    public function set_user_tariff($userid,$tariffid,$start=false) {
-        $userid = (int) $userid;
-        $tariffid = (int) $tariffid;
-
-        if (!$start) $start = time();
-
-        // Check if user exists
-        if (!$this->exists_user($userid)) {
-            return array("success"=>false,"message"=>"User does not exist");
-        }
-
-        // Check if tariff exists
-        if (!$tariff = $this->get_tariff($tariffid)) {
-            return array("success"=>false,"message"=>"Tariff does not exist");
-        }
-        
-        // Get most recent tariff
-        $result = $this->mysqli->query("SELECT tariffid,`start` FROM user_tariffs WHERE userid=$userid ORDER BY start DESC LIMIT 1");
-        if ($row = $result->fetch_object()) {
-            // Check if tariff is already set
-            if ($row->tariffid==$tariffid) {
-                return array("success"=>false,"message"=>"Tariff already set");
-            }
-
-            // check if tariff is already set to start in the future (this should never happen)
-            if ($row->start>$start) {
-                return array("success"=>false,"message"=>"Tariff already set to start in the future");
-            }
-        }
-
-        // Add tariff to user
-        $stmt = $this->mysqli->prepare("INSERT INTO user_tariffs (userid,tariffid,start) VALUES (?,?,?)");
-        $stmt->bind_param("iii",$userid,$tariffid,$start);
-        $stmt->execute();
-        $stmt->close();
-
-        return array("success"=>true);
-    }
-
-    // Get user tariff
-    public function get_user_tariff($userid) {
-        $userid = (int) $userid;
-        $result = $this->mysqli->query("SELECT tariffid FROM user_tariffs WHERE userid=$userid ORDER BY start DESC LIMIT 1");
-        if ($row = $result->fetch_object()) {
-            return $row->tariffid;
-        } else {
-            return false;
-        }
-    }
-
-    // Get user tariff history
-    public function get_user_tariff_history($userid) {
-        $userid = (int) $userid;
-        $result = $this->mysqli->query("SELECT tariffid,start FROM user_tariffs WHERE userid=$userid ORDER BY start ASC");
-        $history = array();
-        while ($row = $result->fetch_object()) {
-            $history[] = $row;
-        }
-        return $history;
-    }
-
-    // Check if a tariff exists
-    public function get_tariff($tariffid) {
-        $tariffid = (int) $tariffid;
-        $result = $this->mysqli->query("SELECT * FROM tariffs WHERE id=$tariffid");
-        return $result->fetch_object();
-    }
-    */
 }

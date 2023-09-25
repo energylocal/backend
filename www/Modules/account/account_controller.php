@@ -21,12 +21,12 @@ function account_controller()
     require_once "Modules/club/club_model.php";
     $club = new Club($mysqli,$redis,$user);
 
-    require_once "Modules/account/account_model.php";
-    $account = new Account($mysqli,$redis,$user);
-
     require_once "Modules/tariff/tariff_model.php";
     $tariff = new Tariff($mysqli);
-    
+
+    require_once "Modules/account/account_model.php";
+    $account = new Account($mysqli,$user,$tariff);
+
     // Linked users
     
     if ($session['admin']) {
@@ -111,15 +111,6 @@ function account_controller()
         }
 
         /*
-        // Set users current tariff
-        if ($route->subaction == 'set_tariff') {
-            $route->format = "json";
-            return $club->set_user_tariff(
-                get('userid',true),
-                get('tariffid',true)
-            );
-        }
-
         if ($route->action == 'data-status') {
             $route->format = "json";
             $clubid = get('clubid',true);

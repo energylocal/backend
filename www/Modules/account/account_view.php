@@ -72,20 +72,20 @@ $v = 1;
         </div>
     </div>
     
-
+-->
     <p><b>Tariff:</b></p>
 
     <div class="row-fluid" style="max-width:800px">
         <div class="span4">
             <p>
-                <select v-model="account.tariff_id">
+                <select v-model="account.tariff_id" @change="update">
                     <option>UNASSIGNED</option>
                     <option v-for="tariff in tariffs" :value="tariff.id">{{ tariff.name }}</option>
                 </select>
             </p>
         </div>
     </div>
-    -->
+    
 
     <a href="<?php echo $path; ?>account/list?clubid=<?php echo $clubid; ?>"><button class="btn">Account list</button></a>
     <button class="btn btn-info" @click="save_account" v-if="mode=='add'">Add account</button>
@@ -109,7 +109,7 @@ $v = 1;
         get_account(userid);
     }
     
-    //tariff_list();
+    tariff_list();
 
     app = new Vue({
         el: '#app',
@@ -119,9 +119,10 @@ $v = 1;
             account: {
                 username: '',
                 password: '',
-                email: ''
+                email: '',
+                tariff_id: 'UNASSIGNED'
             },
-            //tariffs: [],
+            tariffs: [],
             mode: "<?php echo $mode; ?>",
             changed: false,
             show_error: false,
@@ -161,6 +162,11 @@ $v = 1;
                         app.show_error = true;
                     }
                 });
+
+                // save tariff
+                if (this.account.tariff_id != 'UNASSIGNED') {
+                    save_user_tariff(this.userid,this.account.tariff_id);
+                }
             },
             /*
             fetch_octopus_data: function() {
@@ -195,15 +201,24 @@ $v = 1;
             userid: userid
         }, function(result) {
             app.account = result;
+            app.account.tariff_id = 'UNASSIGNED';
         });
     }
 
-    /*
     function tariff_list() {
-        $.getJSON('<?php echo $path; ?>club/tariff/list.json', {
+        $.getJSON('<?php echo $path; ?>tariff/list.json', {
             clubid: clubid
         }, function(result) {
             app.tariffs = result;
         });
-    }*/
+    }
+
+    function save_user_tariff(userid,tariffid) {
+        $.getJSON('<?php echo $path; ?>tariff/user/set', {
+            userid: userid,
+            tariffid: tariffid
+        }, function(result) {
+            app.tariffs = result;
+        });       
+    }
 </script>

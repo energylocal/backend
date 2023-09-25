@@ -23,8 +23,8 @@ $v = 1;
             <th>ID</th>
             <th>Username</th>
             <th>Email</th>
-            <!--
             <th>Tariff</th>
+            <!--
             <th>MPAN</th>
             <th>CAD</th>
             <th>Octopus</th>
@@ -37,8 +37,8 @@ $v = 1;
             <td><a :href="'<?php echo $path; ?>account/edit?userid='+account.userid">{{ account.userid }}</a></td>
             <td>{{ account.username }}</td>
             <td>{{ account.email }}</td>
-            <!--<td>{{ account.tariff_name }}</td>
-            <td>{{ account.mpan }}</td>
+            <td>{{ account.tariff_name }}</td>
+            <!--<td>{{ account.mpan }}</td>
             <td>{{ account.cad_serial }}</td>
             <td>{{ account.octopus_apikey }}</td>
             <td>{{ account.meter_serial }}</td>-->
@@ -69,16 +69,13 @@ $v = 1;
     var clubid = <?php echo $clubid; ?>;
     
     account_list();
-    //tariff_list();
     //data_status();
 
     app = new Vue({
         el: '#app',
         data: {
             accounts: [],
-            //tariffs: [],
             //data_status: [],
-            //edit: {},
             show_error: false,
             error_message: '',
             show_success: false,
@@ -106,14 +103,6 @@ $v = 1;
     }
 
     /*
-    function tariff_list() {
-        $.getJSON('<?php echo $path; ?>club/tariff/list.json', {
-            clubid: clubid
-        }, function(result) {
-            app.tariffs = result;
-        });
-    }
-
     function data_status() {
         $.getJSON('<?php echo $path; ?>account/data-status.json', {
             clubid: clubid

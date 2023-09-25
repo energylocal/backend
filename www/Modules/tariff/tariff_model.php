@@ -219,4 +219,76 @@ class Tariff
         if ($row) return date("jS F Y",$row->start);
         return "";
     }
+
+    // Check if a tariff exists
+    public function get_tariff($tariffid) {
+        $tariffid = (int) $tariffid;
+        $result = $this->mysqli->query("SELECT * FROM tariffs WHERE id=$tariffid");
+        return $result->fetch_object();
+    }
+
+    // User tariff methods
+
+    // Add tariff to user
+    public function set_user_tariff($userid,$tariffid,$start=false) {
+        $userid = (int) $userid;
+        $tariffid = (int) $tariffid;
+
+        if (!$start) $start = time();
+
+        // Check if user exists
+        $result = $this->mysqli->query("SELECT userid FROM club_accounts WHERE userid=$userid");
+        if (!$row = $result->fetch_object()) {
+            return array("success"=>false,"message"=>"User does not exist");
+        }
+
+        // Check if tariff exists
+        if (!$tariff = $this->get_tariff($tariffid)) {
+            return array("success"=>false,"message"=>"Tariff does not exist");
+        }
+        
+        // Get most recent tariff
+        $result = $this->mysqli->query("SELECT tariffid,`start` FROM user_tariffs WHERE userid=$userid ORDER BY start DESC LIMIT 1");
+        if ($row = $result->fetch_object()) {
+            // Check if tariff is already set
+            if ($row->tariffid==$tariffid) {
+                return array("success"=>false,"message"=>"Tariff already set");
+            }
+
+            // check if tariff is already set to start in the future (this should never happen)
+            if ($row->start>$start) {
+                return array("success"=>false,"message"=>"Tariff already set to start in the future");
+            }
+        }
+
+        // Add tariff to user
+        $stmt = $this->mysqli->prepare("INSERT INTO user_tariffs (userid,tariffid,start) VALUES (?,?,?)");
+        $stmt->bind_param("iii",$userid,$tariffid,$start);
+        $stmt->execute();
+        $stmt->close();
+
+        return array("success"=>true);
+    }
+
+    // Get user tariff
+    public function get_user_tariff($userid) {
+        $userid = (int) $userid;
+        $result = $this->mysqli->query("SELECT tariffid FROM user_tariffs WHERE userid=$userid ORDER BY start DESC LIMIT 1");
+        if ($row = $result->fetch_object()) {
+            return $row->tariffid;
+        } else {
+            return false;
+        }
+    }
+
+    // Get user tariff history
+    public function get_user_tariff_history($userid) {
+        $userid = (int) $userid;
+        $result = $this->mysqli->query("SELECT tariffid,start FROM user_tariffs WHERE userid=$userid ORDER BY start ASC");
+        $history = array();
+        while ($row = $result->fetch_object()) {
+            $history[] = $row;
+        }
+        return $history;
+    }
 }
