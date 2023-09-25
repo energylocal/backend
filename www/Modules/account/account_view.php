@@ -216,7 +216,9 @@ $v = 1;
             userid: userid
         }, function(result) {
             app.account = result;
-            app.account.tariff_id = 'UNASSIGNED';
+            if (!app.account.tariff_id) {
+                app.account.tariff_id = 'UNASSIGNED';
+            }
         });
     }
 
