@@ -6,20 +6,23 @@ require "Lib/load_emoncms.php";
 require_once "Modules/club/club_model.php";
 $club = new Club($mysqli,$redis,$user);
 
-require_once "Modules/club/tariff_model.php";
+require_once "Modules/tariff/tariff_model.php";
 $tariff = new Tariff($mysqli);
+
+require_once "Modules/account/account_model.php";
+$account = new Account($mysqli,$user,$tariff);
 
 $result = $club->list();
 print json_encode($result,JSON_PRETTY_PRINT)."\n";
 
-$clubid = 6;
+$clubid = 1;
 // $result = $club->account_list($clubid);
 // print json_encode($result,JSON_PRETTY_PRINT)."\n";
 
 // $tariffid = $tariff->create($clubid,"Bethesda");
 // print "Tariff id: $tariffid\n";
 
-$result = $tariff->list(6);
+$result = $tariff->list(1);
 print json_encode($result,JSON_PRETTY_PRINT)."\n";
 
 // $tariff->delete(2);

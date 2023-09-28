@@ -1,4 +1,12 @@
 <?php
+
+// Load settings object to import from
+require "settings.php";
+
+// Load in users
+$users = json_decode(file_get_contents("users.json"));
+
+// Switch to energylocal emoncms install
 chdir("/var/www/energylocal");
 require "Lib/load_emoncms.php";
 
@@ -12,7 +20,8 @@ $mysqli->query("TRUNCATE TABLE `tariffs`");
 $mysqli->query("TRUNCATE TABLE `tariff_periods`");
 $mysqli->query("TRUNCATE TABLE `user_tariffs`");
 
-die;
+$mysqli->query("TRUNCATE TABLE `octopus_users`");
+$mysqli->query("TRUNCATE TABLE `tma_users`");
 
 $user_class = $user;
 $user = false;
@@ -22,13 +31,18 @@ $result = $user_class->register("admin","admin","admin@energylocal.co.uk","Europ
 print json_encode($result)."\n";
 
 require_once "Modules/club/club_model.php";
-$club_class = new Club($mysqli, $redis, $user_class);
+$club_class = new Club($mysqli,$redis,$user_class);
 
-require_once "Modules/club/tariff_model.php";
+require_once "Modules/tariff/tariff_model.php";
 $tariff_class = new Tariff($mysqli);
 
-// Load settings object
-require "Modules/club/settings.php";
+require_once "Modules/account/account_model.php";
+$account_class = new Account($mysqli,$user_class,$tariff_class);
+
+require_once "Modules/octopus/octopus_model.php";
+$octopus = new OctopusAPI($mysqli, $feed);
+
+
 
 $club_ids = array();
 $original_clubs_id = array();
@@ -74,9 +88,7 @@ foreach ($clubs as  $club) {
     }
 }
 
-// Load in users
-$users = json_decode(file_get_contents("users.json"));
-
+// Add club accounts
 foreach ($users as $user) {
     $password = generate_secure_key(16);
 
@@ -84,9 +96,17 @@ foreach ($users as $user) {
         $clubid = $original_clubs_id[$user->clubs_id];
         // print $user->username." ".$clubid."\n";
 
-        $result = $club_class->add_account($clubid,$user->username,$password,$user->email,$user->mpan,$user->cad_serial,$user->octopus_apikey,$user->meter_serial);
+        $result = $account_class->add_account($clubid,$user->username,$password,$user->email);
         if ($result['success']) {
             $userid = $result['userid'];
+
+            $octopus->user_add(
+                $userid,
+                $user->mpan,
+                $user->meter_serial,
+                $user->octopus_apikey,
+                "consumption"
+            );
 
             // Set apikey_read
             $mysqli->query("UPDATE users SET apikey_read='$user->apikey_read' WHERE id='$userid'");
@@ -108,7 +128,7 @@ foreach ($clubs as  $club) {
     // echo json_encode($club_tariffs, JSON_PRETTY_PRINT)."\n";
 
     // Get club accounts
-    $accounts = $club_class->account_list($club->id);
+    $accounts = $account_class->list($club->id);
 
     foreach ($accounts as $account) {
         
@@ -122,7 +142,7 @@ foreach ($clubs as  $club) {
             $date->setTimezone(new DateTimeZone('Europe/London'));
             $start = $date->getTimestamp();
 
-            $club_class->set_user_tariff($account->userid,$tariff->id,$start);
+            $tariff_class->set_user_tariff($account->userid,$tariff->id,$start);
         }
     }
 }
