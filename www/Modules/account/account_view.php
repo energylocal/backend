@@ -152,7 +152,7 @@ $v = 1;
             
             save_account: function() {
                 var params = {
-                    'id': clubid,
+                    'clubid': clubid,
                     'username': encodeURIComponent(this.account.username),
                     'email': encodeURIComponent(this.account.email)
                 };
