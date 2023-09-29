@@ -172,9 +172,32 @@ class AccountData
 
     }
 
-    public function custom_summary($userid) 
+    public function custom_summary($userid,$start,$end) 
     {
-
+        $daily = $this->daily_summary($userid,$start,$end);
+    
+        $summary = array();
+        $days = 0;
+        
+        foreach ($daily as $key=>$day) {
+            
+            $keys = array_keys($day);
+            array_shift($keys); // remove time field
+            
+            foreach ($keys as $name) {
+                if (!isset($summary[$name])) $summary[$name] = [];
+                foreach ($day[$name] as $key=>$val) {
+                    if (!isset($summary[$name][$key])) $summary[$name][$key] = 0;
+                    $summary[$name][$key] += $val;
+                }
+            }
+            
+            $days++;
+        }
+        
+        $summary["days"] = $days;
+        
+        return $summary; 
     }
 
     // Get tariff bands for a given time

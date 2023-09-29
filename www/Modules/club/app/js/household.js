@@ -72,8 +72,11 @@ function household_draw_summary_range() {
         $(".household_date").html(t("For the range selected in the graph")+":");
     }
 
+    let start = Math.round(view.start*0.001);
+    let end = Math.round(view.end*0.001);
+
     $.ajax({
-        url: path+club+"/household-summary?start="+view.start+"&end="+view.end,
+        url: path+"data/summary?userid="+session.userid+"&start="+start+"&end="+end,
         dataType: 'json',
         success: function(result) {
             if (result.demand==undefined) {

@@ -70,8 +70,17 @@ function data_controller()
 
     // Custom consumption, time of use and use of generation data for a user
     // returns summary results for a custom period
-    if ($route->action == 'custom') {    
+    if ($route->action == 'summary') {    
+        $route->format = "json";
         
+        $userid = get('userid',true);
+        $start = get('start',true);
+        $end = get('end',true);
+
+        require "Modules/data/account_data_model.php";
+        $account_data = new AccountData($feed, $club, $tariff);
+
+        return $account_data->custom_summary($userid,$start,$end);
     }
 
     return array('content'=>false);
