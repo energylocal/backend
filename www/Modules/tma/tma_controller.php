@@ -76,7 +76,7 @@ function tma_controller()
     if ($route->action == 'fetch_data') {
         $route->format = "json";
         $userid = get('userid',true);
-        return $tma_class->save_data($userid,"all");
+        return $tma_class->load_data_to_feed($userid,"all");
     }
 
 

@@ -157,7 +157,87 @@ class TMA
         }
         return false;
     }
+
+    // -------------------------------------------------------------------------
+
     
+    public function mpan_list() {
+        if (!$this->mpan_data) {
+            $this->mpan_data = json_decode($this->redis->get("tmadata"),true);
+            if (!$this->mpan_data) return array();
+        }
+        return array_keys($this->mpan_data);
+    }
+    
+
+    public function load_data_to_feed($userid, $days=7) {
+
+        // Load user entry, get mpan
+        $userid = (int) $userid;
+        if (!$result = $this->user_get($userid)) {
+            return array("success" => false, "message" => "User does not exist");
+        }
+        $mpan = $result->mpan;
+
+        // load from cache
+        if (!$this->mpan_data) {
+            $this->mpan_data = json_decode($this->redis->get("tmadata"),true);
+            if (!$this->mpan_data) return false;
+        }
+
+        // Get tma feed id or create feed
+        if (!$feedid = $this->feed->get_id($userid, "gen_hh_tma")) {
+            $result = $this->feed->create($userid, "energylocal", "gen_hh_tma", 5, json_decode('{"interval":1800}'));
+            if (!$result['success']) return $result;
+            $feedid = $result['feedid'];
+        }
+
+        $npoints = 0;
+
+        // if the mpan is in the mpan data
+        if (isset($this->mpan_data[$mpan])) {
+            // get the last time value for the feed
+            $timevalue = $this->feed->get_timevalue($feedid);
+
+            $data = array();
+            
+            // for each time value in the mpan data
+            foreach ($this->mpan_data[$mpan] as $time=>$value) {
+                // if rebuild is true or the time value is newer than the last time value
+                if ($days=='all' || $time>($timevalue['time']-($days*24*3600))) {  
+                    $data[] = array($time,$value);
+                    $npoints ++;
+                }
+            }
+
+            if (count($data)>0) {
+                $this->feed->post_multiple($feedid,$data);
+                return array("success" => true, "message" => "Saved $npoints points");
+            }
+        }
+
+        return array("success" => false);
+    }
+
+    private function validate($mpan) {
+
+        // Validate MPAN
+        if (strlen("$mpan") != 13) {
+            return array("success" => false, "message" => "Invalid MPAN, must be 13 digits $mpan");
+        }
+        if ($mpan != (int)$mpan) {
+            return array("success" => false, "message" => "Invalid MPAN, must be numeric $mpan");
+        }
+
+        return array("success" => true, "message" => "Validated");
+    }
+
+    // -------------------------------------------------------------------------
+
+    // This section includes methods for loading the TMA data from the ftp directory
+    // converting these csv files into an associative array of MPANs and their data
+    // and then caching this data in redis and locally
+
     public function load_from_ftp() {
         $this->mpan_errors = array();
 
@@ -201,15 +281,7 @@ class TMA
         
         return array("success"=>true,"message"=>"Loaded from ftp", "mpan_errors"=>$this->mpan_errors);
     }
-    
-    public function mpan_list() {
-        if (!$this->mpan_data) {
-            $this->mpan_data = json_decode($this->redis->get("tmadata"),true);
-            if (!$this->mpan_data) return array();
-        }
-        return array_keys($this->mpan_data);
-    }
-    
+
     private function process_file($filename, $mpan_data) {
 
         $date = new DateTime();
@@ -277,67 +349,5 @@ class TMA
         }
 
         return $mpan_data;
-    }
-
-    public function save_data($userid, $days=7) {
-
-        // Load user entry, get mpan
-        $userid = (int) $userid;
-        if (!$result = $this->user_get($userid)) {
-            return array("success" => false, "message" => "User does not exist");
-        }
-        $mpan = $result->mpan;
-
-        // load from cache
-        if (!$this->mpan_data) {
-            $this->mpan_data = json_decode($this->redis->get("tmadata"),true);
-            if (!$this->mpan_data) return false;
-        }
-
-        // Get tma feed id or create feed
-        if (!$feedid = $this->feed->get_id($userid, "gen_hh_tma")) {
-            $result = $this->feed->create($userid, "energylocal", "gen_hh_tma", 5, json_decode('{"interval":1800}'));
-            if (!$result['success']) return $result;
-            $feedid = $result['feedid'];
-        }
-
-        $npoints = 0;
-
-        // if the mpan is in the mpan data
-        if (isset($this->mpan_data[$mpan])) {
-            // get the last time value for the feed
-            $timevalue = $this->feed->get_timevalue($feedid);
-
-            $data = array();
-            
-            // for each time value in the mpan data
-            foreach ($this->mpan_data[$mpan] as $time=>$value) {
-                // if rebuild is true or the time value is newer than the last time value
-                if ($days=='all' || $time>($timevalue['time']-($days*24*3600))) {  
-                    $data[] = array($time,$value);
-                    $npoints ++;
-                }
-            }
-
-            if (count($data)>0) {
-                $this->feed->post_multiple($feedid,$data);
-                return array("success" => true, "message" => "Saved $npoints points");
-            }
-        }
-
-        return array("success" => false);
-    }
-
-    private function validate($mpan) {
-
-        // Validate MPAN
-        if (strlen("$mpan") != 13) {
-            return array("success" => false, "message" => "Invalid MPAN, must be 13 digits $mpan");
-        }
-        if ($mpan != (int)$mpan) {
-            return array("success" => false, "message" => "Invalid MPAN, must be numeric $mpan");
-        }
-
-        return array("success" => true, "message" => "Validated");
     }
 }
