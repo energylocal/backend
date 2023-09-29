@@ -19,38 +19,42 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 // club generation and aggregated consumption data is also available
 function data_controller()
 {
+    global $mysqli, $redis, $session, $route, $settings;
 
-    // Get feed data
-    if ($route->action == 'data') {
+    require_once "Modules/club/club_model.php";
+    $club = new Club($mysqli,$redis, false);
 
-    }
+    require_once "Modules/tariff/tariff_model.php";
+    $tariff = new Tariff($mysqli);
+
+    //require_once "Modules/account/account_model.php";
+    //$account = new Account($mysqli,$user,$tariff);
+
+    require "Modules/feed/feed_model.php";
+    $feed = new Feed($mysqli,$redis,$settings['feed']);
 
     // Daily consumption, time of use and use of generation data for a user
     // returns multiple days between start and end
+    // url: /data/daily?userid=2&start=1695164400&end=1695942000
     if ($route->action == 'daily') {
         $route->format = "json";
 
-        $start = get('start',true);
-        $end = get('end',true);
+        $userid = get('userid',true);
 
-        // get midnight of today
-        // using datetime
-        /*
-        $date = new DateTime();
-        $date->setTime(0,0,0);
-        $end = $date->getTimestamp();
-
-        // get midnight of 7 days ago
-        $date->modify('-7 days');
-        $start = $date->getTimestamp();
-        */
-
-        // Set based on session user
-        $userid = 2;
-
-        // Find consumption feed id
-        require "Modules/feed/feed_model.php";
-        $feed = new Feed($mysqli,$redis,$settings['feed']);
+        if (!isset($_GET['start']) || !isset($_GET['end'])) {
+            // get midnight of today
+            // using datetime
+            $date = new DateTime();
+            $date->setTime(0,0,0);
+            $end = $date->getTimestamp();
+    
+            // get midnight of 7 days ago
+            $date->modify('-7 days');
+            $start = $date->getTimestamp();        
+        } else {
+            $start = get('start',true);
+            $end = get('end',true);
+        }
 
         require "Modules/data/account_data_model.php";
         $account_data = new AccountData($feed, $club, $tariff);
@@ -69,4 +73,6 @@ function data_controller()
     if ($route->action == 'custom') {    
         
     }
+
+    return array('content'=>false);
 }

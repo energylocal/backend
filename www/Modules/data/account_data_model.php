@@ -34,7 +34,7 @@ class AccountData
         $end = (int) $end;
 
         // Load tariff history for user
-        $tariff_history = $this->club->get_user_tariff_history($userid);
+        $tariff_history = $this->tariff->get_user_tariff_history($userid);
 
         // Load tariff bands for each tariff
         foreach ($tariff_history as $tariff) {
