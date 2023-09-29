@@ -38,41 +38,6 @@ $v = 1;
         </div>
     </div>
 
-    <!--
-    <p><b>Data sources:</b></p>
-
-    <div class="row-fluid" style="max-width:800px">
-        <div class="span4">
-            <p>
-                <label>MPAN</label>
-                <input type="text" v-model="account.mpan">
-            </p>
-        </div>
-        <div class="span4">
-            <p>
-                <label>Meter serial</label>
-                <input type="text" v-model="account.meter_serial">
-            </p>
-        </div>
-        <div class="span4">
-            <p>
-                <label>Octopus API key</label>
-                <input type="text" v-model="account.octopus_apikey">
-            </p>
-        </div>
-
-    </div>
-
-    <div class="row-fluid" style="max-width:800px">
-    <div class="span4">
-            <p>
-                <label>CAD Serial</label>
-                <input type="text" v-model="account.cad_serial">
-            </p>
-        </div>
-    </div>
-    
--->
     <p><b>Tariff:</b></p>
 
     <div class="row-fluid" style="max-width:800px">
@@ -101,7 +66,6 @@ $v = 1;
     <a href="<?php echo $path; ?>account/list?clubid=<?php echo $clubid; ?>"><button class="btn">Account list</button></a>
     <button class="btn btn-info" @click="save_account" v-if="mode=='add'">Add account</button>
     <button class="btn btn-warning" @click="save_account" v-if="mode=='edit' && changed">Save changes</button>
-    <!--<button class="btn btn-success" @click="fetch_octopus_data">Fetch Octopus data</button>-->
 
     <div class="alert alert-error" style="margin-top:20px; width:440px" v-if="show_error" v-html="error_message"></div>
     <div class="alert alert-success" style="margin-top:20px; width:440px" v-if="show_success" v-html="success_message"></div>
@@ -183,28 +147,6 @@ $v = 1;
                     save_user_tariff(this.userid,this.account.tariff_id);
                 }
             },
-            /*
-            fetch_octopus_data: function() {
-                app.show_success = true;
-                app.success_message = "Fetching data...";
-                this.show_error = false;
-                $.post('<?php echo $path; ?>octopus/fetch_data.json', {
-                    'userid': this.userid,
-                    'mpan': this.account.mpan,
-                    'octopus_apikey': this.account.octopus_apikey,
-                    'meter_serial': this.account.meter_serial
-                }, function(result) {
-                    if (result.success) {
-                        app.show_error = false;
-                        app.show_success = true;
-                        app.success_message = result.message;
-                    } else {
-                        app.show_success = false;
-                        app.show_error = true;
-                        app.error_message = "<b>Error:</b> " + result.message;
-                    }
-                });
-            },*/
             graph: function() {
                 alert("graph");
             }

@@ -26,7 +26,8 @@ class OctopusAPI
     public function user_list($clubid=false) {
         $clubid = (int) $clubid;
         
-        $result = $this->mysqli->query("SELECT * FROM octopus_users");
+        // get all ocotpus_users link to club_accounts by userid and users table by id  |  WHERE club_accounts.clubid=$clubid
+        $result = $this->mysqli->query("SELECT * FROM octopus_users INNER JOIN users ON octopus_users.userid=users.id INNER JOIN club_accounts ON users.id=club_accounts.userid");
         $accounts = array();
         while ($row = $result->fetch_object()) {
             // Get data status

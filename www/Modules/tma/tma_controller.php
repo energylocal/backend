@@ -17,24 +17,72 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 // TMA data source controller
 function tma_controller()
 {
+    global $mysqli, $redis, $session, $route, $settings;
+
     require "Modules/feed/feed_model.php";
     $feed = new Feed($mysqli,$redis,$settings['feed']);
 
     require_once "Modules/tma/tma_model.php";
-    $tma_class = new TMA($redis, $feed);
+    $tma_class = new TMA($mysqli, $redis, $feed);
 
-    if ($route->subaction == 'load') {
+    if (!$session['admin']) return array('content'=>false, 'message'=>'Admin access required');
+
+    // List all accounts
+    // /tma/list.json
+    // /tma/list
+    if ($route->action == 'list') {
+        if ($route->format == 'json') {
+            return $tma_class->user_list();
+        } else {
+            return view("Modules/tma/tma_list_view.php", array());
+        }
+    }
+
+    // Add a new account
+    // /tma/add.json?userid=1&mpan=1234567890
+    if ($route->action == 'add') {
         $route->format = "json";
-        $tma_class->load();
-        return $tma_class->mpan_list();
+        return $tma_class->user_add(
+            post('userid',true),
+            post('mpan',true),
+            "consumption"
+        );
+    }
+
+    // Remove an account
+    // /tma/delete.json?userid=1
+    if ($route->action == 'delete') {
+        $route->format = "json";
+        $userid = get('userid',true);
+        return $tma_class->user_remove($userid);
     }
     
-    if ($route->subaction == 'list') {
+    // Load from ftp to cache
+    // /tma/load_from_ftp.json
+    if ($route->action == 'load_from_ftp') {
         $route->format = "json";
-        return $tma_class->mpan_list();  
+        return $tma_class->load_from_ftp();
     }
 
-    if ($route->subaction == 'save') {
+    // Get available MPANs
+    // /tma/get_available_mpan.json
+    if ($route->action == 'mpan_list') {
+        $route->format = "json";
+        return $tma_class->mpan_list();
+    }
+
+    // Load user data to feed
+    // /tma/fetch_data.json?userid=1
+    if ($route->action == 'fetch_data') {
+        $route->format = "json";
+        $userid = get('userid',true);
+        return $tma_class->save_data($userid,"all");
+    }
+
+
+
+
+    if ($route->action == 'save') {
         $route->format = "json";
 
         return $tma_class->save(
