@@ -25,6 +25,7 @@ function tma_controller()
     require_once "Modules/tma/tma_model.php";
     $tma_class = new TMA($mysqli, $redis, $feed);
 
+    // Admin access required
     if (!$session['admin']) return array('content'=>false, 'message'=>'Admin access required');
 
     // List all accounts

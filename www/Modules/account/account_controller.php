@@ -27,99 +27,93 @@ function account_controller()
     require_once "Modules/account/account_model.php";
     $account = new Account($mysqli,$user,$tariff);
 
-    // Linked users
-    
-    if ($session['admin']) {
+    // Admin access required
+    if (!$session['admin']) return array('content'=>false, 'message'=>'Admin access required');
 
-        if ($route->action == 'list') {
-            if ($route->format == 'json') {
-                $clubid = get('clubid',false);
-                return $account->list($clubid);
-            } else {
+    // Return list of club accounts
+    // /account/list.json?clubid=1 (returns json list of accounts)
+    // /account/list?clubid=1 (returns html view)
+    if ($route->action == 'list') {
+        if ($route->format == 'json') {
+            $clubid = get('clubid',false);
+            return $account->list($clubid);
+        } else {
 
-                $clubid = get('clubid',false);
-                if (!$club_info = $club->get($clubid)) {
-                    return "Club not found";
-                }
-
-                return view("Modules/account/account_list_view.php", array(
-                    "clubid"=>$clubid, 
-                    "club_name"=>$club_info->name
-                ));
+            $clubid = get('clubid',false);
+            if (!$club_info = $club->get($clubid)) {
+                return "Club not found";
             }
+
+            return view("Modules/account/account_list_view.php", array(
+                "clubid"=>$clubid, 
+                "club_name"=>$club_info->name
+            ));
         }
+    }
 
-        if ($route->action == 'add') {
-            if ($route->format == 'json') {
-                return $account->add_account(
-                    post('clubid',true),
-                    post('username',true),
-                    post('password',true),
-                    post('email',true)
-                );
-            } else {
-                $clubid = get('clubid',true);
-                $club_name = $club->get_name($clubid);
-
-                return view("Modules/account/account_view.php", array(
-                    "mode"=>"add",
-                    "userid"=>0,
-                    "clubid"=>$clubid,
-                    "club_name"=>$club_name
-                ));
-            }
-        }
-
-        if ($route->action == 'edit') {
-            if ($route->format == 'json') {
-                return $account->edit_account(
-                    post('userid',true),
-                    post('username',true),
-                    post('email',true)
-                );
-            } else {
-                $userid = get('userid',true);
-                $clubid = $account->get_club_id($userid);
-                $club_name = $club->get_name($clubid);
-
-                return view("Modules/account/account_view.php", array(
-                    "mode"=>"edit",
-                    "userid"=>$userid,
-                    "clubid"=>$clubid,
-                    "club_name"=>$club_name
-                ));
-            }
-        }
-
-        if ($route->action == 'view') {
-            $userid = get('userid',true);
-            
-            $clubid = $account->get_club_id($userid);
+    // Add a new account
+    // url: /account/add.json
+    // post body: clubid=1&username=abc&password=123&email=abc@abc
+    // return: json success or fail
+    if ($route->action == 'add') {
+        if ($route->format == 'json') {
+            return $account->add_account(
+                post('clubid',true),
+                post('username',true),
+                post('password',true),
+                post('email',true)
+            );
+        } else {
+            // Account view html
+            // url: /account/add?clubid=1
+            // return: html view
+            $clubid = get('clubid',true);
             $club_name = $club->get_name($clubid);
-            
+
             return view("Modules/account/account_view.php", array(
-                "userid"=>$userid,
+                "mode"=>"add",
+                "userid"=>0,
                 "clubid"=>$clubid,
                 "club_name"=>$club_name
             ));
         }
+    }
+
+    // Edit account
+    // url: /account/edit.json
+    // post body: clubid=1&username=abc&email=abc@abc
+    // return: json success or fail
+    if ($route->action == 'edit' && $route->format == 'json') {
+        return $account->edit_account(
+            post('userid',true),
+            post('username',true),
+            post('email',true)
+        );
+    }
+
+    // Account view/edit
+    // url: /account/view?userid=1
+    // return: html view 
+    if ($route->action == 'view' || $route->action == 'edit') {
+        $userid = get('userid',true);
         
-        if ($route->action == 'get') {
-            $route->format = "json";
-            $userid = get('userid',true);
-            return $account->get($userid);
-        }
-
-        /*
-        if ($route->action == 'data-status') {
-            $route->format = "json";
-            $clubid = get('clubid',true);
-
-            require "Modules/feed/feed_model.php";
-            $feed_class = new Feed($mysqli,$redis,$settings['feed']);
-            return $club->account_data_status($clubid,$feed_class);
-        }
-        */
+        $clubid = $account->get_club_id($userid);
+        $club_name = $club->get_name($clubid);
+        
+        return view("Modules/account/account_view.php", array(
+            "userid"=>$userid,
+            "clubid"=>$clubid,
+            "club_name"=>$club_name
+        ));
+    }
+    
+    // Get account info
+    // url: /account/get.json?userid=1
+    // return: json account info
+    if ($route->action == 'get') {
+        $route->format = "json";
+        $userid = get('userid',true);
+        return $account->get($userid);
     }
     
     return false;
