@@ -9,4 +9,11 @@ if ($session["admin"]) {
         "order"=>1, 
         "icon"=>"format_list_bulleted"
     );
+
+    $menu["energylocal"]["l2"]['app'] = array(
+        "name"=>_("Dashboard"),
+        "href"=>"club/app", 
+        "order"=>0, 
+        "icon"=>"format_list_bulleted"
+    );
 }

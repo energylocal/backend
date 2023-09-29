@@ -307,4 +307,46 @@ class Tariff
         }
         return $history;
     }
+
+    // Replace with client side pre-processing?
+    public function getTariffsTable($tariffs) {
+        global $lang;
+        $tariffs = json_decode(json_encode($tariffs));
+        // add properties and format strings...
+        for ($i=0; $i<count($tariffs); $i++) {
+            $t = $tariffs[$i];
+
+            $next = $i+1;
+            if ($next<count($tariffs)) $t->end = $tariffs[$next]->start;
+            else $t->end = $tariffs[0]->start;
+
+            $t->start = (int) $t->start;
+            // convert 6.5 to 06:30
+            $h = floor($t->start);
+            if ($h<10) $h = '0' . $h;
+            $m = ($t->start-floor($t->start))*60;
+            if ($m<10) $m = '0' . $m;
+            $t->start = $h . ':' . $m;
+
+            $t->end = (int) $t->end;
+            // convert 6.5 to 06:30
+            $h = floor($t->end);
+            if ($h<10) $h = '0' . $h;
+            $m = ($t->end-floor($t->end))*60;
+            if ($m<10) $m = '0' . $m;
+            $t->end = $h . ':' . $m;
+
+            $start = intval(date('G', strtotime($t->start)));
+            $end = intval(date('G', strtotime($t->end)));
+            $now = intval(date('G'));
+            $t->isCurrent = $now >= $start && $now < $end;
+            // add 12hr times with am/pm
+            $t->start = date('g', strtotime($t->start)) . ($t->start < 12 ? translate('am', $lang): translate('pm', $lang));
+            $t->end = date('g', strtotime($t->end)) . ($t->end < 12 ? translate('am', $lang): translate('pm', $lang));
+            // add css class names to style the title column
+            $t->css = 'text-' . $t->name;
+            $t->rowClass = $t->isCurrent ? ' class="current"': '';
+        }
+        return $tariffs;
+    }
 }
