@@ -82,7 +82,7 @@ foreach ($clubs as  $club) {
             $end = $tmp[0] + ($tmp[1]/60);
 
             // Add tariff period
-            $tariff_class->add_period($tariffid,$period['name'],$start,$end,$period['generator'],$period['import'],$period['color']);
+            $tariff_class->add_period($tariffid,$period['name'],0,$start,$period['generator'],$period['import'],$period['color']);
         }
         $n++;
     }
