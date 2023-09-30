@@ -15,10 +15,12 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 class Club
 {
     private $mysqli;
+    private $user;
 
-    public function __construct($mysqli)
+    public function __construct($mysqli,$user = false)
     {
         $this->mysqli = $mysqli;
+        $this->user = $user;
         $this->log = new EmonLogger(__FILE__);
     }
 
@@ -66,11 +68,27 @@ class Club
         if ($this->exists_name($name)) {
             return array("success"=>false,"message"=>"Club name already exists");
         }
-        $stmt = $this->mysqli->prepare("INSERT INTO club (name,created) VALUES (?,?)");
+
+        // Create club
+        $stmt = $this->mysqli->prepare("INSERT INTO club (name,created,userid) VALUES (?,?,0)");
         $stmt->bind_param("si",$name,$time);
         $stmt->execute();
         $stmt->close();
-        return array("success"=>true,"id"=>$this->mysqli->insert_id);
+        $clubid = $this->mysqli->insert_id;
+
+        // Create club aggregation user
+        $username = "club".$clubid;
+        $password = generate_secure_key(16);
+        $email = "club".$clubid."@energylocal.org.uk";
+        
+        $result = $this->user->register($username,$password,$email,"Europe/London");
+        if (!$result['success']) {
+            return $result;
+        }
+        $userid = $result['userid'];
+        $this->mysqli->query("UPDATE club SET userid=$userid WHERE id=$clubid");
+
+        return array("success"=>true,"id"=>$clubid);
     }
 
     // Delete a club

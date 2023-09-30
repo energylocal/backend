@@ -16,10 +16,10 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 function club_controller()
 {
-    global $mysqli, $session, $route, $settings, $redis;
+    global $mysqli, $session, $route, $settings, $redis, $user;
 
     require_once "Modules/club/club_model.php";
-    $club = new Club($mysqli);
+    $club = new Club($mysqli, $user);
 
     // API
     // List all clubs, Public
