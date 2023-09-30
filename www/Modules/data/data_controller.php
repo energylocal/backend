@@ -26,8 +26,11 @@ function data_controller()
 
     require_once "Modules/tariff/tariff_model.php";
     $tariff = new Tariff($mysqli);
+    
 
     require "Modules/feed/feed_model.php";
+    // Enough for 1 year of half hourly data
+    $settings['feed']['max_datapoints'] = 20000;
     $feed = new Feed($mysqli,$redis,$settings['feed']);
 
     require "Modules/data/account_data_model.php";

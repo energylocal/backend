@@ -230,7 +230,7 @@ function resize() {
 // Fetch start time of consumption data
 date_selected = "fortnight";
 var out = '<option value="custom" style="display:none">'+t("Custom")+'</option>';
-var period_select_options = ["day","week","fortnight","month","year"];
+var period_select_options = ["week","fortnight","month","year"];
 for (var z in period_select_options) {
     out += '<option value="'+period_select_options[z]+'">'+t(ucfirst(period_select_options[z]))+'</option>';
 }

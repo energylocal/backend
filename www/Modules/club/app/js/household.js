@@ -254,135 +254,81 @@ function household_bargraph_load() {
     var npoints = 800;
     interval = ((view.end - view.start) * 0.001) / npoints;
     interval = round_interval(interval);
+
+    $(".household-daily").hide();
+    $("#household-daily-note").show();
+
+    let start = Math.round(view.start*0.001);
+    let end = Math.round(view.end*0.001);
     
-    if (mode=="daily") {
-        $(".household-daily").hide();
-        $("#household-daily-note").show();
-
-        let start = Math.round(view.start*0.001);
-        let end = Math.round(view.end*0.001);
-        
-        $.ajax({
-            url: path+"data/daily?userid="+session.userid+"&start="+start+"&end="+end,
-            dataType: 'json',
-            async: true,                      
-            success: function(result) {
-                if (!result || result===null || result==="") {
-                    console.log("ERROR","invalid household-daily-summary response: ", result);
-                    // Hide household dashboard and show missing data block
-                    $('#missing-data-block').show();
-                    $("#your-score").hide();
-                    $("#your-usage").hide();
-                } else {
-                    household_result = result;
-                    
-                    if (household_firstload) {
-                        household_firstload = false;
-                    }
-                    household_draw_summary_range();
-
-                    // Find categories
-                    var categories = ['generation'];
-                    for (var z in result) {
-                        // check for categories in import
-                        for (var c in result[z].import) {
-                            if (categories.indexOf(c)==-1 && c!='total') categories.push(c);
-                        }
-                    }
-
-                    // Create empty series data
-                    var series_data = {};
-                    for (var c in categories) {
-                        series_data[categories[c]] = [];
-                    }
-
-                    // Populate series data
-                    for (var z in result) {
-                        var time = result[z].time*1000;
-                        for (var c in result[z].import) {
-                            if (c!='total') {
-                                series_data[c].push([time, result[z].import[c]]);
-                            }
-                        }
-                        household_daily_index_map.push(z);
-                    }
-
-                    // Colours
-                    var category_colors = {
-                        "morning": "#ffdc00",
-                        "midday": "#ffb401",
-                        "daytime": "#ffb401",
-                        "evening": "#e6602b",
-                        "overnight": "#014c2d",
-                        "generation": club_settings.generator_color
-                    }
-
-                    //var kwh_in_window = 0;
-                    //var cost_in_window = 0;
-                    //var unit_cost = 100 * cost_in_window / kwh_in_window;
-                    
-                    //$("#household_use_history_stats").parent().parent().show();
-                    //$("#household_use_history_stats").html(kwh_in_window.toFixed(1)+" kWh, £"+cost_in_window.toFixed(0)+", "+unit_cost.toFixed(2)+"p/kWh");
-                    
-                    householdseries = [];
-                    barwidth = 3600*24*1000*0.75;
-
-                    for (var c in categories) {
-                        householdseries.push({
-                            stack: true, data: series_data[categories[c]], color: category_colors[categories[c]],
-                            bars: { show: true, align: "center", barWidth: barwidth, fill: 1.0, lineWidth:0}
-                        });
-                    }
-                    household_bargraph_resize();
+    $.ajax({
+        url: path+"data/daily?userid="+session.userid+"&start="+start+"&end="+end,
+        dataType: 'json',
+        async: true,                      
+        success: function(result) {
+            if (!result || result===null || result==="") {
+                console.log("ERROR","invalid household-daily-summary response: ", result);
+                // Hide household dashboard and show missing data block
+                $('#missing-data-block').show();
+                $("#your-score").hide();
+                $("#your-usage").hide();
+            } else {
+                household_result = result;
+                
+                if (household_firstload) {
+                    household_firstload = false;
                 }
-            }
-        });
-    }
-    else 
-    {
-        $(".household-daily").show();
-        $("#household-daily-note").hide();
-        $("#household_use_history_stats").parent().parent().hide();
-        
-        $.ajax({                                      
-            url: path+"feed/average.json?id="+session.feeds["use_hh_est"]+"&start="+view.start+"&end="+view.end+"&interval="+interval+"&apikey="+session['apikey_read'],
-            dataType: 'json',
-            async: true,                      
-            success: function(result) {
-                if (!result || result===null || result==="" || result.constructor!=Array) {
-                    console.log("ERROR","invalid response: "+result);
-                } else {
-                    household_data = result;
+                household_draw_summary_range();
 
-                    $.ajax({                                      
-                        url: path+"feed/average.json?id="+session.feeds["gen_hh"]+"&start="+view.start+"&end="+view.end+"&interval="+interval+"&apikey="+session['apikey_read'],
-                        dataType: 'json',
-                        async: true,                      
-                        success: function(result) {
-                            if (!result || result===null || result==="" || result.constructor!=Array) {
-                                console.log("ERROR","invalid response: "+result);
-                            } else {
-                                gen_data = result;
-                                
-                                householdseries = [];
-                                barwidth = interval*1000*0.75;
+                // Find categories
+                var categories = ['generation'];
+                for (var z in result) {
+                    // check for categories in import
+                    for (var c in result[z].import) {
+                        if (categories.indexOf(c)==-1 && c!='total') categories.push(c);
+                    }
+                }
 
-                                householdseries.push({
-                                    stack: false, data: household_data, color: "#e62f31", label: t("Consumption"),
-                                    bars: { show: true, align: "center", barWidth: barwidth, fill: 1.0, lineWidth:0}
-                                });
-                                householdseries.push({
-                                    stack: false, data: gen_data, color:club_settings.generator_color, label: t(ucfirst(club_settings.generator)),
-                                    bars: { show: true, align: "center", barWidth: barwidth, fill: 1.0, lineWidth:0}
-                                });
-                                household_bargraph_resize();
-                            }
+                // Create empty series data
+                var series_data = {};
+                for (var c in categories) {
+                    series_data[categories[c]] = [];
+                }
+
+                // Populate series data
+                for (var z in result) {
+                    var time = result[z].time*1000;
+                    for (var c in result[z].import) {
+                        if (c!='total') {
+                            series_data[c].push([time, result[z].import[c]]);
                         }
+                    }
+                    household_daily_index_map.push(z);
+                }
+
+                // Colours
+                var category_colors = {
+                    "morning": "#ffdc00",
+                    "midday": "#ffb401",
+                    "daytime": "#ffb401",
+                    "evening": "#e6602b",
+                    "overnight": "#014c2d",
+                    "generation": club_settings.generator_color
+                }
+
+                householdseries = [];
+                barwidth = 3600*24*1000*0.75;
+
+                for (var c in categories) {
+                    householdseries.push({
+                        stack: true, data: series_data[categories[c]], color: category_colors[categories[c]],
+                        bars: { show: true, align: "center", barWidth: barwidth, fill: 1.0, lineWidth:0}
                     });
                 }
+                household_bargraph_resize();
             }
-        });
-    }
+        }
+    });
 }
 
 function household_bargraph_draw() {
