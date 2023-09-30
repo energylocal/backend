@@ -77,18 +77,27 @@ class Club
         $clubid = $this->mysqli->insert_id;
 
         // Create club aggregation user
+        if (!$this->create_club_user($clubid)) {
+            return array("success"=>false,"message"=>"Failed to create club user");
+        }
+
+        return array("success"=>true,"id"=>$clubid);
+    }
+
+    // Create club aggregation user
+    private function create_club_user($clubid) {
+        $clubid = (int) $clubid;
         $username = "club".$clubid;
         $password = generate_secure_key(16);
         $email = "club".$clubid."@energylocal.org.uk";
         
         $result = $this->user->register($username,$password,$email,"Europe/London");
         if (!$result['success']) {
-            return $result;
+            return false;
         }
         $userid = $result['userid'];
         $this->mysqli->query("UPDATE club SET userid=$userid WHERE id=$clubid");
-
-        return array("success"=>true,"id"=>$clubid);
+        return true;
     }
 
     // Delete a club
