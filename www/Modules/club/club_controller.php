@@ -16,7 +16,7 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 function club_controller()
 {
-    global $mysqli, $session, $route;
+    global $mysqli, $session, $route, $settings, $redis;
 
     require_once "Modules/club/club_model.php";
     $club = new Club($mysqli);
@@ -52,6 +52,8 @@ function club_controller()
     // EnergyLocal app
     if ($route->action == 'app') {
 
+        $userid = $session['userid'];
+
         $club = 'bethesda';
         $club_settings = array(
             "bethesda" => array(
@@ -72,7 +74,6 @@ function club_controller()
 
         global $translation;
         $translation = array();
-        $available_reports = array();
         $session['feeds'] = array(
             // hub_use
             // meter_power
@@ -83,9 +84,15 @@ function club_controller()
         require_once "Modules/tariff/tariff_model.php";
         $tariff_class = new Tariff($mysqli);
 
-        $tariffid = $tariff_class->get_user_tariff(2);
+        $tariffid = $tariff_class->get_user_tariff($userid);
         $tariffs = $tariff_class->list_periods($tariffid);
         $tariffs_table = $tariff_class->getTariffsTable($tariffs);
+
+        require "Modules/feed/feed_model.php";
+        $feed = new Feed($mysqli,$redis,$settings['feed']);
+
+        require "Modules/data/account_data_model.php";
+        $account_data = new AccountData($feed, $club, $tariff_class);
 
         return view("Modules/club/app/client_view.php", array(
             'session' => $session,
@@ -93,7 +100,7 @@ function club_controller()
             'club_settings' => $club_settings[$club],
             'tariffs_table' => $tariffs_table,
             'tariffs' => $tariffs,
-            'available_reports' => $available_reports
+            'available_reports' => $account_data->get_available_reports($userid)
         ));
     }
     return false;

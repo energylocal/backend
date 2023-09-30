@@ -27,11 +27,11 @@ function data_controller()
     require_once "Modules/tariff/tariff_model.php";
     $tariff = new Tariff($mysqli);
 
-    //require_once "Modules/account/account_model.php";
-    //$account = new Account($mysqli,$user,$tariff);
-
     require "Modules/feed/feed_model.php";
     $feed = new Feed($mysqli,$redis,$settings['feed']);
+
+    require "Modules/data/account_data_model.php";
+    $account_data = new AccountData($feed, $club, $tariff);
 
     // Daily consumption, time of use and use of generation data for a user
     // returns multiple days between start and end
@@ -56,9 +56,6 @@ function data_controller()
             $end = get('end',true);
         }
 
-        require "Modules/data/account_data_model.php";
-        $account_data = new AccountData($feed, $club, $tariff);
-
         return $account_data->daily_summary($userid,$start,$end);
     }
 
@@ -72,15 +69,17 @@ function data_controller()
     // returns summary results for a custom period
     if ($route->action == 'summary') {    
         $route->format = "json";
-        
         $userid = get('userid',true);
         $start = get('start',true);
         $end = get('end',true);
-
-        require "Modules/data/account_data_model.php";
-        $account_data = new AccountData($feed, $club, $tariff);
-
         return $account_data->custom_summary($userid,$start,$end);
+    }
+
+    // Return list of reports available
+    if ($route->action == 'available_reports') {
+        $route->format = "json";
+        $userid = get('userid',true);
+        return $account_data->get_available_reports($userid);
     }
 
     return array('content'=>false);

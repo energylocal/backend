@@ -167,11 +167,6 @@ class AccountData
         return $daily;
     }
 
-    public function monthly_summary($userid) 
-    {
-
-    }
-
     public function custom_summary($userid,$start,$end) 
     {
         $daily = $this->daily_summary($userid,$start,$end);
@@ -199,6 +194,38 @@ class AccountData
         
         return $summary; 
     }
+
+    // Returns a list of months for which data is available
+    public function get_available_reports($userid) {
+        $userid = (int) $userid;
+
+        // Get feedid of consumption feed
+        if (!$use_feedid = $this->feed->get_id($userid,"use_hh_octopus")) {
+            return array("success"=>false, "message"=>"Missing consumption feed");
+        }
+        // Get meta data for consumption feed
+        $meta = $this->feed->get_meta($use_feedid);
+       
+        // Set start time to first day of month
+        $d = new DateTime();
+        $d->setTimezone(new DateTimeZone("Europe/London"));
+        $d->setTimestamp($meta->start_time);
+        $d->setDate($d->format("Y"),$d->format("m"),1);
+        $d->setTime(0,0,0);
+        $time = $d->getTimestamp();
+        
+        $end = time();
+
+        $available_reports = array();
+        while ($time<$end) {
+            $available_reports[] = $d->format("Y-m");
+            $d->modify('+1 month');
+            $time = $d->getTimestamp();
+        }
+        
+        return $available_reports;
+    }
+
 
     // Get tariff bands for a given time
     public function get_tariff_bands($tariff_history,$time) {

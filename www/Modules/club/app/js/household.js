@@ -47,23 +47,6 @@ function household_summary_load()
 
 // -------------------------------------------------------------------------------------------
 
-function household_draw_summary_day(day) {
-    if (day==undefined) return false;
-    
-    var d = new Date(day[0]*1000);
-    var ext = "";
-    if (d.getDate()==1) ext = "st";
-    if (d.getDate()==2) ext = "nd";
-    if (d.getDate()==3) ext = "rd";
-    if (d.getDate()>3) ext = "th";
-    if (lang=="cy_GB") ext = "";
-    $(".household_date").html(t("On the %s you scored").replace('%s', d.getDate()+ext+" "+t(months_long[d.getMonth()])));
-
-    draw_summary(convert_summary_to_key_format(day))
-}
-
-// -------------------------------------------------------------------------------------------
-
 function household_draw_summary_range() { 
 
     if(['year','month','fortnight','week','day'].indexOf(date_selected) != -1) {  
@@ -675,48 +658,3 @@ $('#household_powergraph_placeholder').bind("plotselected", function (event, ran
     household_power_end = ranges.xaxis.to;
     household_powergraph_load();
 });
-
-function convert_summary_to_key_format(day) {
-
-    var time = day[0];
-    
-    // Work out which tariff version we are on
-    var history_index = 0;
-    for (var tr=0; tr<club_settings.tariff_history.length; tr++) {
-        let s = club_settings.tariff_history[tr]['start'];
-        let e = club_settings.tariff_history[tr]['end'];
-        if (time>=s && time<e) history_index = tr;
-    }
-    var tariff_bands = club_settings.tariff_history[history_index].tariffs;
-    
-    var keys = [];
-    for (var tr=0; tr<tariff_bands.length; tr++) {
-        keys.push(tariff_bands[tr].name);
-    }
-    keys.push("total");
-    
-    
-    var result = {
-        time: day[0],
-        days: 1,
-        demand: {},
-        import: {},
-        generation: {},
-        generation_cost: {},
-        import_cost: {},
-        cost: {}
-    };
-    
-    for (var tr in keys) {
-        var key = keys[tr];
-        
-        result.demand[key] = day[1][tr];
-        result.import[key] = day[2][tr];
-        result.generation[key] = day[3][tr];
-        result.generation_cost[key] = day[4][tr];
-        result.import_cost[key] = day[5][tr];
-        result.cost[key] = day[6][tr];
-    }
-    
-    return result;
-}
