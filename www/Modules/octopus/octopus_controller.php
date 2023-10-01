@@ -19,7 +19,7 @@ function octopus_controller()
     global $mysqli, $redis, $user, $path, $session, $route , $settings;
 
     require_once "Modules/club/club_model.php";
-    $club = new Club($mysqli,$user);
+    $club = new Club($mysqli, $user);
 
     require "Modules/feed/feed_model.php";
     $feed = new Feed($mysqli,$redis,$settings['feed']);

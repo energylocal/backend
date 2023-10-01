@@ -19,7 +19,7 @@ function account_controller()
     global $mysqli, $redis, $user, $path, $session, $route , $settings;
 
     require_once "Modules/club/club_model.php";
-    $club = new Club($mysqli,$redis,$user);
+    $club = new Club($mysqli, $user);
 
     require_once "Modules/tariff/tariff_model.php";
     $tariff = new Tariff($mysqli);

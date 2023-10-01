@@ -22,7 +22,7 @@ function data_controller()
     global $mysqli, $redis, $session, $route, $settings;
 
     require_once "Modules/club/club_model.php";
-    $club = new Club($mysqli,$redis, false);
+    $club = new Club($mysqli, false);
 
     require_once "Modules/tariff/tariff_model.php";
     $tariff = new Tariff($mysqli);
