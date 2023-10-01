@@ -50,7 +50,7 @@ class AccountData
         
         // Check if user has generation feed
         // Load generation data between start and end times
-        if (!$gen_feedid = $this->feed->get_id($userid,"gen_hh")) {
+        if (!$gen_feedid = $this->feed->get_id($userid,"shared_gen_hh")) {
             // No generation feed, create empty array
             $gen_data = array();
             for ($i=0; $i<count($use_data); $i++) $gen_data[$i] = 0;
@@ -142,24 +142,25 @@ class AccountData
             // Get tariff bands for this time
             $bands = $this->get_tariff_bands($tariff_history,$time);
             $band = $this->get_tariff_band($bands,$hour);
-
-            // initialise period allocation
-            if (!isset($period_allocation[$band->name])) {
-                $period_allocation[$band->name] = array();
-                foreach ($categories as $key) {
-                    $period_allocation[$band->name][$key] = 0;
+            if ($band) {
+                // initialise period allocation
+                if (!isset($period_allocation[$band->name])) {
+                    $period_allocation[$band->name] = array();
+                    foreach ($categories as $key) {
+                        $period_allocation[$band->name][$key] = 0;
+                    }
                 }
+
+                // add to period allocation, kwh
+                $period_allocation[$band->name]['demand'] += $use;
+                $period_allocation[$band->name]['generation'] += $gen;
+                $period_allocation[$band->name]['import'] += $import;
+
+                // add to period allocation, costs
+                $period_allocation[$band->name]['generation_cost'] += $gen*$band->generator*0.01;
+                $period_allocation[$band->name]['import_cost'] += $import*$band->import*0.01;
+                $period_allocation[$band->name]['cost'] += ($gen*$band->generator*0.01) + ($import*$band->import*0.01);
             }
-
-            // add to period allocation, kwh
-            $period_allocation[$band->name]['demand'] += $use;
-            $period_allocation[$band->name]['generation'] += $gen;
-            $period_allocation[$band->name]['import'] += $import;
-
-            // add to period allocation, costs
-            $period_allocation[$band->name]['generation_cost'] += $gen*$band->generator*0.01;
-            $period_allocation[$band->name]['import_cost'] += $import*$band->import*0.01;
-            $period_allocation[$band->name]['cost'] += ($gen*$band->generator*0.01) + ($import*$band->import*0.01);
 
             $n++; // increment data index
         }

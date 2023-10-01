@@ -101,6 +101,7 @@ function account_controller()
         $club_name = $club->get_name($clubid);
         
         return view("Modules/account/account_view.php", array(
+            "mode"=>"edit",
             "userid"=>$userid,
             "clubid"=>$clubid,
             "club_name"=>$club_name

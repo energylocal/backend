@@ -5,7 +5,7 @@ global $path;
 $v = 1;
 ?>
 <script src="<?php echo $path; ?>Lib/vue.min.js"></script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.1/axios.min.js"></script>
 
 <div id="app">
 

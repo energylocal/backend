@@ -345,6 +345,10 @@ function club_bargraph_load() {
             if (sh>eh && (hour>=sh || hour<eh)) on_tariff = true;
             if (sh==eh) on_tariff = true;
             
+            if (data[tariffs[x].name]==undefined) {
+                data[tariffs[x].name] = [];
+            }
+
             if (on_tariff) {
                 unit_price = (tariffs[x].import*imprt + tariffs[x].generator*selfuse) / consumption
                 
