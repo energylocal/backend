@@ -178,19 +178,10 @@ class FeedGroup
         fclose($fh);
     }
 
-    // read 
-    public function read($index) {
-        $pos = $this->pos[$index];
-
-        $val = null;
-        if ($pos>=0 && $pos<$this->npoints[$index]) {
-            $tmp = unpack("f",substr($this->data[$index],$pos*4,4));
-            if (!is_nan($tmp[1])) {
-                $val = $tmp[1];
-            }
-        }
-        $this->pos[$index]++;
-        return $val;
+    // return number of feeds
+    public function num()
+    {
+        return count($this->meta);
     }
 
     // find start and end time
@@ -219,10 +210,19 @@ class FeedGroup
         }
     }
 
-    // return number of feeds
-    public function num()
-    {
-        return count($this->meta);
+    // read 
+    public function read($index) {
+        $pos = $this->pos[$index];
+
+        $val = null;
+        if ($pos>=0 && $pos<$this->npoints[$index]) {
+            $tmp = unpack("f",substr($this->data[$index],$pos*4,4));
+            if (!is_nan($tmp[1])) {
+                $val = $tmp[1];
+            }
+        }
+        $this->pos[$index]++;
+        return $val;
     }
 }
 
