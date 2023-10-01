@@ -23,6 +23,17 @@ $mysqli->query("TRUNCATE TABLE `user_tariffs`");
 $mysqli->query("TRUNCATE TABLE `octopus_users`");
 $mysqli->query("TRUNCATE TABLE `tma_users`");
 
+// Clear all .dat and .meta files from /var/opt/emoncms/phpfina
+$files = glob("/var/opt/emoncms/phpfina/*.dat");
+foreach ($files as $file) {
+    unlink($file);
+}
+
+$files = glob("/var/opt/emoncms/phpfina/*.meta");
+foreach ($files as $file) {
+    unlink($file);
+}
+
 $user_class = $user;
 $user = false;
 
