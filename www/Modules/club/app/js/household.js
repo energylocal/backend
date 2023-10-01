@@ -303,10 +303,9 @@ function household_bargraph_load() {
                             series_data[c].push([time, result[z].import[c]]);
                         }
                     }
-
                     series_data['generation'].push([time, result[z].generation.total]);
 
-                    household_daily_index_map.push(z);
+                    household_daily_index_map[time] = z;
                 }
 
                 // Colours
@@ -414,7 +413,8 @@ $('#household_bargraph_placeholder').bind("plothover", function (event, pos, ite
 
             if (mode=="daily") {
 
-                let key = household_daily_index_map[z];
+                let key = household_daily_index_map[itemTime];
+                if (household_result[key]==undefined) return;
 
                 var out = "<table>";
                 out += "<tr><td>"+days[d.getDay()]+", "+months[d.getMonth()]+" "+d.getDate()+"</td></tr>";
