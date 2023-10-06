@@ -27,9 +27,9 @@ function data_controller()
     require_once "Modules/tariff/tariff_model.php";
     $tariff = new Tariff($mysqli);
     
-
-    require "Modules/feed/feed_model.php";
+    // Feed model is used to access feed meta data
     // Enough for 1 year of half hourly data
+    require "Modules/feed/feed_model.php";
     $settings['feed']['max_datapoints'] = 20000;
     $feed = new Feed($mysqli,$redis,$settings['feed']);
 
@@ -41,8 +41,6 @@ function data_controller()
     // url: /data/daily?userid=2&start=1695164400&end=1695942000
     if ($route->action == 'daily') {
         $route->format = "json";
-
-        $userid = get('userid',true);
 
         if (!isset($_GET['start']) || !isset($_GET['end'])) {
             // get midnight of today
@@ -59,7 +57,15 @@ function data_controller()
             $end = get('end',true);
         }
 
-        return $account_data->daily_summary($userid,$start,$end);
+        if (isset($_GET['userid'])) {
+            $userid = get('userid',true);
+            return $account_data->daily_summary($userid,$start,$end, 'user');
+        } elseif (isset($_GET['clubid'])) {
+            $clubid = get('clubid',true);
+            return $account_data->daily_summary($clubid,$start,$end, 'club');
+        } else {
+            return array("success"=>false, "message"=>"Missing userid or clubid");
+        }
     }
 
     // Monthly consumption, time of use and use of generation data for a user
@@ -72,10 +78,18 @@ function data_controller()
     // returns summary results for a custom period
     if ($route->action == 'summary') {    
         $route->format = "json";
-        $userid = get('userid',true);
+
         $start = get('start',true);
         $end = get('end',true);
-        return $account_data->custom_summary($userid,$start,$end);
+
+        if (isset($_GET['userid'])) {
+            $userid = get('userid',true);
+            return $account_data->custom_summary($userid,$start,$end, 'user');
+
+        } elseif (isset($_GET['clubid'])) {
+            $clubid = get('clubid',true);
+            return $account_data->custom_summary($clubid,$start,$end, 'club');
+        }
     }
 
     // Return list of reports available

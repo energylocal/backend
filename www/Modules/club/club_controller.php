@@ -95,6 +95,7 @@ function club_controller()
         $account_data = new AccountData($feed, $club, $tariff_class);
 
         return view("Modules/club/app/client_view.php", array(
+            'clubid' => $club_settings[$club]['club_id'],
             'session' => $session,
             'club' => $club,
             'club_settings' => $club_settings[$club],

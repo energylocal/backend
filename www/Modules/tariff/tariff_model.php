@@ -48,7 +48,11 @@ class Tariff
                 $row->active_users = 0;
             }
             
-            $row->first_assigned = $this->first_assigned($row->id);
+            if ($first_assigned = $this->first_assigned($row->id)) {
+                $row->last_assigned = date("jS F Y",$first_assigned);
+            } else {
+                $row->last_assigned = "";
+            }
 
             $tariffs[] = $row;
         }
@@ -78,8 +82,9 @@ class Tariff
         $tariffid = (int) $tariffid;
 
         // Only allow tariff to be deleted if it has never been assigned
-        $first_assigned = $this->first_assigned($tariffid);
-        if ($first_assigned!="") return array("success"=>false, "message"=>"Tariff has been assigned to users");
+        if ($this->first_assigned($tariffid)) {
+            return array("success"=>false, "message"=>"Tariff has been assigned to users");
+        }
         
         $stmt = $this->mysqli->prepare("DELETE FROM tariffs WHERE id=?");
         $stmt->bind_param("i",$tariffid);
@@ -132,8 +137,7 @@ class Tariff
         }
 
         // Only allow tariff periods to be added if it has never been assigned
-        $first_assigned = $this->first_assigned($tariffid);
-        if ($first_assigned!="") return array("success"=>false, "message"=>"Tariff has been assigned to users");
+        if ($this->first_assigned($tariffid)) return array("success"=>false, "message"=>"Tariff has been assigned to users");
 
         // Check number of periods in this tariff
         $result = $this->mysqli->query("SELECT COUNT(*) AS count FROM tariff_periods WHERE tariffid='$tariffid'");
@@ -168,8 +172,7 @@ class Tariff
         }
 
         // Only allow tariff periods to be added if it has never been assigned
-        $first_assigned = $this->first_assigned($tariffid);
-        if ($first_assigned!="") return array("success"=>false, "message"=>"Tariff has been assigned to users");
+        if ($this->first_assigned($tariffid)) return array("success"=>false, "message"=>"Tariff has been assigned to users");
 
         // Validate index
         $result = $this->mysqli->query("SELECT COUNT(*) AS count FROM tariff_periods WHERE tariffid='$tariffid'");
@@ -189,8 +192,7 @@ class Tariff
         $index = (int) $index;
 
         // Only allow tariff periods to be added if it has never been assigned
-        $first_assigned = $this->first_assigned($tariffid);
-        if ($first_assigned!="") return array("success"=>false, "message"=>"Tariff has been assigned to users");
+        if ($this->first_assigned($tariffid)) return array("success"=>false, "message"=>"Tariff has been assigned to users");
         
         $stmt = $this->mysqli->prepare("DELETE FROM tariff_periods WHERE tariffid=? AND `index`=?");
         $stmt->bind_param("ii",$tariffid,$index);
@@ -216,8 +218,8 @@ class Tariff
 
         $result = $this->mysqli->query("SELECT `start` FROM user_tariffs WHERE tariffid='$tariffid' ORDER BY `start` ASC LIMIT 1");
         $row = $result->fetch_object();
-        if ($row) return date("jS F Y",$row->start);
-        return "";
+        if ($row) return $row->start*1;
+        return false;
     }
 
     // Check if a tariff exists
@@ -304,6 +306,27 @@ class Tariff
                 $row->start = date("jS F Y H:i",$row->start);
             }
             $history[] = $row;
+        }
+        return $history;
+    }
+
+    // Get club tariff history
+    // This is a temporary approach that gets the first history  for the first user allocated to the club
+    // This is used to display the tariff history on the club page
+    public function get_club_tariff_history($clubid) {
+        $clubid = (int) $clubid;
+
+        // get tariff list for club
+        $result = $this->mysqli->query("SELECT id,name FROM tariffs WHERE clubid='$clubid'");
+        $history = array();
+        while ($row = $result->fetch_object()) {
+            $t = new stdClass();
+            $t->tariffid = (int) $row->id;
+            $t->tariff_name = $row->name;
+            
+            $t->start = $this->first_assigned($row->id);
+
+            $history[] = $t;
         }
         return $history;
     }

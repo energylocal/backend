@@ -82,6 +82,7 @@ var app_path = "<?php echo $app_path; ?>";
 var club = "<?php echo $club; ?>";
 var club_path = [path, club, '/'].join('');
 var is_hub = false;
+var clubid = <?php echo $clubid; ?>;
 
 var club_settings = <?php echo json_encode($club_settings);?>;
 

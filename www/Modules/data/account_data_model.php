@@ -27,30 +27,63 @@ class AccountData
         $this->log = new EmonLogger(__FILE__);
     }
 
-    public function daily_summary($userid,$start,$end) 
+    public function daily_summary($userid,$start,$end, $type = 'user') 
     {
         $userid = (int) $userid;
         $start = (int) $start;
         $end = (int) $end;
 
-        // Load tariff history for user
-        $tariff_history = $this->tariff->get_user_tariff_history($userid);
+        // ---------------------------------------------------------------------
+        // It might make sense to move this user / club specific code to a separate function
+        // ---------------------------------------------------------------------
 
-        // Load tariff bands for each tariff
-        foreach ($tariff_history as $tariff) {
-            $tariff->bands = $this->tariff->list_periods($tariff->tariffid);
+        if ($type == 'user') {
+            // Load tariff history for user
+            $tariff_history = $this->tariff->get_user_tariff_history($userid);
+
+            // Load tariff bands for each tariff
+            foreach ($tariff_history as $tariff) {
+                $tariff->bands = $this->tariff->list_periods($tariff->tariffid);
+            }
+
+            // Check if user has consumption feed
+            // Load half hourly data between start and end times
+            if (!$use_feedid = $this->feed->get_id($userid,"use_hh_octopus")) {
+                return array("success"=>false, "message"=>"Missing consumption feed");
+            }
+
+            $gen_feedid = $this->feed->get_id($userid,"shared_gen_hh");
+        } else {
+            $clubid = $userid;
+
+            // Load tariff history for user
+            // this is based on the complete list of tariffs for the club
+            // and when each tariff was first assigned to a user
+            $tariff_history = $this->tariff->get_club_tariff_history($clubid);
+
+            // Load tariff bands for each tariff
+            foreach ($tariff_history as $tariff) {
+                $tariff->bands = $this->tariff->list_periods($tariff->tariffid);
+            }
+
+            $club_userid = $this->club->get_userid($clubid);
+            // Check if user has consumption feed
+            // Load half hourly data between start and end times
+            if (!$use_feedid = $this->feed->get_id($club_userid,"club_demand_hh")) {
+                return array("success"=>false, "message"=>"Missing consumption feed");
+            }
+
+            //$gen_feedid = $this->feed->get_id($club_userid,"club_gen_hh");
+            $gen_feedid = $this->feed->get_id(6,"gen_hh_tma");
         }
 
-        // Check if user has consumption feed
-        // Load half hourly data between start and end times
-        if (!$use_feedid = $this->feed->get_id($userid,"use_hh_octopus")) {
-            return array("success"=>false, "message"=>"Missing consumption feed");
-        }
+        // ---------------------------------------------------------------------
+
         $use_data = $this->feed->get_data($use_feedid,$start,$end,1800,0,"Europe/London","notime",false,0,0,false,-1);
         
         // Check if user has generation feed
         // Load generation data between start and end times
-        if (!$gen_feedid = $this->feed->get_id($userid,"shared_gen_hh")) {
+        if (!$gen_feedid) {
             // No generation feed, create empty array
             $gen_data = array();
             for ($i=0; $i<count($use_data); $i++) $gen_data[$i] = 0;
@@ -168,9 +201,9 @@ class AccountData
         return $daily;
     }
 
-    public function custom_summary($userid,$start,$end) 
+    public function custom_summary($userid, $start, $end, $type = 'user') 
     {
-        $daily = $this->daily_summary($userid,$start,$end);
+        $daily = $this->daily_summary($userid,$start,$end, $type);
     
         $summary = array();
         $days = 0;

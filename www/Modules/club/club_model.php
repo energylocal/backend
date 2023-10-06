@@ -57,6 +57,15 @@ class Club
         return $name;
     }
 
+    // Get club userid from id
+    public function get_userid($id) {
+        $id = (int) $id;
+        $result = $this->mysqli->query("SELECT userid FROM club WHERE id=$id");
+        $row = $result->fetch_object();
+        return $row->userid;
+    }
+    
+
     // Create a new club
     public function create($name) {
         $time = time();
